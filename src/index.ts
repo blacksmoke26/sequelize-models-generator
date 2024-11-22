@@ -5,6 +5,8 @@
  * @since 2022-07-23
  */
 
+import 'dotenv/config';
+
 // App
 import { fromApp } from '@root/app';
 
