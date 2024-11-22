@@ -12,7 +12,7 @@
     "prebuild": "npm run lint",
     "build": "yarn run clean && babel src --out-dir ./dist --extensions \".ts\"",
     "build:prod": "yarn run clean && babel src --out-dir ./dist --extensions \".ts\" --minified --no-comments",
-    "lint": "eslint",
+    "lint": "eslint .",
     "prettier": "prettier --config .prettierrc --write .",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
