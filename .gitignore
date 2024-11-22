@@ -11,7 +11,7 @@ logs
 npm-debug.log*
 
 # Backup files
-*.*bak
+*.*bak*
 
 # Dependencies
 node_modules/
@@ -24,7 +24,7 @@ node_modules/
 coverage
 
 # Transpiled files
-build/
+dist/
 
 # JetBrains IDEs
 .idea/

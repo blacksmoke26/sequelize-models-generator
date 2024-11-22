@@ -4,9 +4,9 @@ Developer Ready: A comprehensive template. Works out of the box for most [Node.j
 
 Instant Value: All basic tools included and configured:
 
-- [TypeScript](https://www.typescriptlang.org/) 4.7+.
+- [TypeScript](https://www.typescriptlang.org/) 5.6+.
 - Using [Babel-node](https://babeljs.io/docs/en/babel-node) for transpilation.
-- [ESLint](https://eslint.org/) with some initial rules recommendation.
+- [ESLint](https://eslint.org/) with some initial rules' recommendation.
 - [Jest](https://jestjs.io/) for fast unit testing and code coverage.
 - Type definitions for Node.js and Jest.
 - [Prettier](https://prettier.io/) to enforce consistent code style.
@@ -18,6 +18,7 @@ Instant Value: All basic tools included and configured:
 - Clean imports: No relative files path.
 - Zero dependencies: Install your own packages.
 - `yarn` PM by default.
+- `pm2` as a process manager
 
 🤲 Free as in speech: available under the APLv2 license.
 
@@ -28,9 +29,11 @@ This project is intended to be used with the latest Active LTS release of [Node.
 ### Use as a repository template
 
 To start,
-- Just clone this repository.
-- Copy `.env.development.sample` to `.env`.
-- Start adding your code in the `src` and unit tests in the `__tests__` directories.
+1. Install PM2 process manager: `yarn global add pm2` or `npm i -g pm2`.
+2. Clone this repository.
+3. Copy `.env.sample` to `.env`.
+4. Install packages: `yarn install` or `npm i`.
+5. Start adding your code in the `src` and unit tests in the `__tests__` directories.
 
 ### Clone repository
 
@@ -53,17 +56,20 @@ unzip node-ts-boilerplate.zip && rm node-ts-boilerplate.zip
 
 ## Available Scripts
 
-- `start` - Serve built project.
+- `start` - serve built project.
+- `start:dev` - interactive watch mode to automatically transpile source files.
+- `start:debug` - interactive watch mode with debugger to automatically transpile source files.
 - `clean` - remove coverage data, Jest cache, transpiled files and runtime files.
 - `prebuild` - lint source files and tests before building.
 - `build` - transpile TypeScript to ES6 (node compatible).
-- `build:watch` - interactive watch mode to automatically transpile source files.
-- `build:debug` - interactive watch mode with debugger to automatically transpile source files.
 - `build:prod` - transpile TypeScript to ES6 for production *(minified)*.
 - `lint` - lint source files and tests.
 - `prettier` - reformat files.
 - `test` - run tests.
 - `test:watch` - interactive watch mode to automatically re-run tests.
+- `pm2:start` - [PM2](https://pm2.keymetrics.io/) specific start service(s).
+- `pm2:stop` - [PM2](https://pm2.keymetrics.io/) specific stop service(s).
+- `pm2:delete` - [PM2](https://pm2.keymetrics.io/) specific delete service(s).
 
 ## Additional Information
 

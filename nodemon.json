@@ -1,4 +1,5 @@
 {
   "watch": ["src/**/*"],
+  "quiet": true,
   "ext": "js,mjs,ts,flow,json,graphql"
 }
