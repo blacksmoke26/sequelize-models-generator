@@ -8,7 +8,7 @@
 import 'dotenv/config';
 
 // App
-import { fromApp } from '@root/app';
+import { fromApp } from '~/app';
 
 // Bootstrapper
 (async (): Promise<void> => {
