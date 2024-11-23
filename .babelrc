@@ -2,7 +2,7 @@
   "presets": [[
     "@babel/preset-env", {
       "targets": {
-        "node": "16.16"
+        "node": "22.0"
       }
     }
   ], "@babel/preset-typescript"],
@@ -12,7 +12,7 @@
       {
         "root": ["./src"],
         "alias": {
-          "@root": "./src"
+          "~": "./src"
         }
       }
     ],
