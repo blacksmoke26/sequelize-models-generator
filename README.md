@@ -4,7 +4,7 @@ Developer Ready: A comprehensive template. Works out of the box for most [Node.j
 
 Instant Value: All basic tools included and configured:
 
-- [TypeScript](https://www.typescriptlang.org/) 5.6+.
+- [TypeScript](https://www.typescriptlang.org/) 5.7+.
 - Using [Babel-node](https://babeljs.io/docs/en/babel-node) for transpilation.
 - [ESLint](https://eslint.org/) with some initial rules' recommendation.
 - [Jest](https://jestjs.io/) for fast unit testing and code coverage.
