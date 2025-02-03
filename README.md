@@ -1,4 +1,4 @@
-# node-ts-boilerplate
+# NodeJS TypeScript Minimal Boilerplate (v0.2)
 
 Developer Ready: A comprehensive template. Works out of the box for most [Node.js](https://nodejs.org) projects.
 
