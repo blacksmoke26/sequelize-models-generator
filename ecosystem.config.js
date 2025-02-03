@@ -1,4 +1,4 @@
-const config = require('package.json');
+const config = require(`${__dirname}/package.json`);
 
 /**
  * @see https://pm2.keymetrics.io/docs/usage/application-declaration/
