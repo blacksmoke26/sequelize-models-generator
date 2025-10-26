@@ -4,15 +4,22 @@ import knex from 'knex';
 import type { TableColumnInfo, TableInfo } from '~/typings/knex';
 
 /**
- * Interface for Knex table columns information
+ * Interface representing the structure of Knex table columns information
  */
-export interface KnexTableColumnsInfo {
-  [p: string]: {
-    type: string;
-    maxLength: number | null;
-    nullable: boolean;
-    defaultValue: string | null;
-  };
+export type KnexTableColumnsInfo = Record<string, KnexTableColumnInfo>;
+
+/**
+ * Interface representing detailed information about a Knex table column
+ */
+export interface KnexTableColumnInfo {
+  /** The data type of the column */
+  type: string;
+  /** Array of column names (used for composite keys or multi-column indexes) */
+  columns: string[];
+  /** Flag indicating whether the column has a unique constraint */
+  isUnique: boolean;
+  /** Flag indicating whether the column is part of the primary key */
+  isPrimary: boolean;
 }
 
 /**
@@ -115,6 +122,7 @@ export default abstract class DatabaseUtils {
 
     const indexRows: TableIndex[] = [];
 
+    // eslint-disable-next-line no-useless-catch
     try {
       const { rows = [] } = (await knex.raw(query, [tableName])) as Awaited<{
         rows: Array<{
@@ -240,7 +248,7 @@ export default abstract class DatabaseUtils {
 
       return result.rows?.[0]?.is_auto_increment === true;
     } catch {
-    	return false;
+      return false;
     }
   }
 
@@ -322,6 +330,26 @@ export default abstract class DatabaseUtils {
   }
 
   /**
+   * Retrieves detailed information for a specific column in a table
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @param columnName - The name of the column
+   * @returns Promise resolving to the column information or null if not found
+   */
+  public static async getColumnInfo(
+    knex: knex.Knex,
+    tableName: string,
+    columnName: string,
+  ) {
+    const [info]: TableColumnInfo[] = await knex
+      .select('*')
+      .from('information_schema.columns')
+      .where({ table_name: tableName, column_name: columnName });
+
+    return info || null;
+  }
+
+  /**
    * Retrieves the UDT (User-Defined Type) name for a specific column
    * @param knex - The knex instance
    * @param tableName - The name of the table
@@ -347,6 +375,28 @@ export default abstract class DatabaseUtils {
         ?.toLowerCase?.()
         ?.replace('_', '') ?? null
     );
+  }
+
+  /**
+   * Retrieves the numeric precision and scale for a specific column
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @param columnName - The name of the column
+   * @returns Promise resolving to a tuple [precision, scale] or null if not found
+   */
+  public static async getNumericPrecision(
+    knex: knex.Knex,
+    tableName: string,
+    columnName: string,
+  ): Promise<[number, number] | [null, null]> {
+    const [info]: TableColumnInfo[] = await knex
+      .select('numeric_precision', 'numeric_scale')
+      .from('information_schema.columns')
+      .where({ table_name: tableName, column_name: columnName });
+
+    return !info
+      ? [null, null]
+      : [+info.numeric_precision, +info.numeric_scale];
   }
 
   /**
@@ -392,7 +442,7 @@ export default abstract class DatabaseUtils {
   ): Promise<KnexTableColumnsInfo> {
     return (await knex
       .table(tableName)
-      .columnInfo()) as Awaited<KnexTableColumnsInfo>;
+      .columnInfo()) as unknown as Awaited<KnexTableColumnsInfo>;
   }
 
   /**
@@ -417,5 +467,339 @@ export default abstract class DatabaseUtils {
     }
 
     return defaultValueString.replace(/^'/, '').replace(/'$/, '');
+  }
+
+  /**
+   * Checks if a column is a domain type in PostgreSQL
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @param columnName - The name of the column to check
+   * @returns Promise resolving to a boolean indicating if the column is a domain type
+   */
+  public static async isDomainTypeColumn(
+    knex: knex.Knex,
+    tableName: string,
+    columnName: string,
+  ): Promise<boolean> {
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM pg_type t
+        JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+        JOIN pg_attribute a ON a.atttypid = t.oid
+        JOIN pg_class c ON c.oid = a.attrelid
+        WHERE c.relname = ?
+          AND a.attname = ?
+          AND n.nspname = current_schema()
+          AND t.typtype = 'd'
+      )
+    `;
+
+    try {
+      const result = await knex.raw(query, [tableName, columnName]);
+      return result.rows?.[0]?.exists === true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Retrieves all domain type information for a specific table column in PostgreSQL
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @param columnName - The name of the column
+   * @returns Promise resolving to domain type information or null if not a domain column
+   */
+  public static async getDomainTypeInfo(
+    knex: knex.Knex,
+    tableName: string,
+    columnName: string,
+  ): Promise<{
+    domainName: string;
+    baseType: string;
+    constraints: Array<{
+      name: string;
+      checkExpression?: string;
+      notNull?: boolean;
+      default?: string;
+    }>;
+  } | null> {
+    const query = `
+      SELECT
+        t.typname AS domain_name,
+        bt.typname AS base_type,
+        COALESCE(pg_get_expr(conbin, conrelid), '') AS check_expression,
+        conname AS constraint_name,
+        contype AS constraint_type,
+        pg_get_expr(adbin, adrelid) AS default_value
+      FROM pg_type t
+      JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+      JOIN pg_attribute a ON a.atttypid = t.oid
+      JOIN pg_class c ON c.oid = a.attrelid
+      LEFT JOIN pg_type bt ON t.typbasetype = bt.oid
+      LEFT JOIN pg_constraint co ON co.contypid = t.oid
+      LEFT JOIN pg_attrdef ad ON ad.adrelid = c.oid AND ad.adnum = a.attnum
+      WHERE c.relname = ?
+        AND a.attname = ?
+        AND n.nspname = current_schema()
+        AND t.typtype = 'd'
+    `;
+
+    try {
+      const result = await knex.raw(query, [tableName, columnName]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      const rows = result.rows;
+      const domainInfo = {
+        domainName: rows[0].domain_name,
+        baseType: rows[0].base_type,
+        constraints: rows.map((row: any) => ({
+          name: row.constraint_name,
+          checkExpression: row.check_expression || undefined,
+          notNull: row.constraint_type === 'n',
+          default: row.default_value || undefined,
+        })),
+      };
+
+      return domainInfo;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Retrieves all domain types for a specific table in PostgreSQL
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @returns Promise resolving to an array of domain type information for all columns
+   */
+  public static async getTableDomainTypes(
+    knex: knex.Knex,
+    tableName: string,
+  ): Promise<
+    Array<{
+      columnName: string;
+      domainName: string;
+      baseType: string;
+      constraints: Array<{
+        name: string;
+        checkExpression?: string;
+        notNull?: boolean;
+        default?: string;
+      }>;
+    }>
+  > {
+    const query = `
+      SELECT
+        a.attname AS column_name,
+        t.typname AS domain_name,
+        bt.typname AS base_type,
+        COALESCE(pg_get_expr(conbin, conrelid), '') AS check_expression,
+        conname AS constraint_name,
+        contype AS constraint_type,
+        pg_get_expr(adbin, adrelid) AS default_value
+      FROM pg_type t
+      JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+      JOIN pg_attribute a ON a.atttypid = t.oid
+      JOIN pg_class c ON c.oid = a.attrelid
+      LEFT JOIN pg_type bt ON t.typbasetype = bt.oid
+      LEFT JOIN pg_constraint co ON co.contypid = t.oid
+      LEFT JOIN pg_attrdef ad ON ad.adrelid = c.oid AND ad.adnum = a.attnum
+      WHERE c.relname = ?
+        AND n.nspname = current_schema()
+        AND t.typtype = 'd'
+        AND a.attnum > 0
+      ORDER BY a.attnum
+    `;
+
+    try {
+      const result = await knex.raw(query, [tableName]);
+
+      const columnMap = new Map();
+
+      result.rows.forEach((row: any) => {
+        if (!columnMap.has(row.column_name)) {
+          columnMap.set(row.column_name, {
+            columnName: row.column_name,
+            domainName: row.domain_name,
+            baseType: row.base_type,
+            constraints: [],
+          });
+        }
+
+        const columnInfo = columnMap.get(row.column_name);
+        if (row.constraint_name) {
+          columnInfo.constraints.push({
+            name: row.constraint_name,
+            checkExpression: row.check_expression || undefined,
+            notNull: row.constraint_type === 'n',
+            default: row.default_value || undefined,
+          });
+        }
+      });
+
+      return Array.from(columnMap.values());
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Checks if a column is a composite type in PostgreSQL
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @param columnName - The name of the column to check
+   * @returns Promise resolving to a boolean indicating if the column is a composite type
+   */
+  public static async isCompositeTypeColumn(
+    knex: knex.Knex,
+    tableName: string,
+    columnName: string,
+  ): Promise<boolean> {
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM pg_type t
+        JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+        JOIN pg_attribute a ON a.atttypid = t.oid
+        JOIN pg_class c ON c.oid = a.attrelid
+        WHERE c.relname = ?
+          AND a.attname = ?
+          AND n.nspname = current_schema()
+          AND t.typtype = 'c'
+      )
+    `;
+
+    try {
+      const result = await knex.raw(query, [tableName, columnName]);
+      return result.rows?.[0]?.exists === true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Retrieves all composite type fields for a specific table column in PostgreSQL
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @param columnName - The name of the column
+   * @returns Promise resolving to an array of composite type fields or null if not a composite column
+   */
+  public static async getCompositeTypeFields(
+    knex: knex.Knex,
+    tableName: string,
+    columnName: string,
+  ): Promise<Array<{ field_name: string; field_type: string }> | null> {
+    const query = `
+      SELECT
+        t.typname AS type_name,
+        a.attname AS field_name,
+        pg_format_type(a.atttypid, a.atttypmod) AS field_type
+      FROM pg_type t
+      JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+      JOIN pg_attribute a ON a.attrelid = t.oid
+      JOIN pg_class c ON c.oid = (
+        SELECT a2.attrelid
+        FROM pg_attribute a2
+        JOIN pg_class c2 ON c2.oid = a2.attrelid
+        WHERE c2.relname = ? AND a2.attname = ?
+      )
+      WHERE c.relname = ?
+        AND a.attname = ?
+        AND n.nspname = current_schema()
+        AND t.typtype = 'c'
+        AND a.attnum > 0
+      ORDER BY a.attnum
+    `;
+
+    try {
+      const result = await knex.raw(query, [
+        tableName,
+        columnName,
+        tableName,
+        columnName,
+      ]);
+      return result.rows.length > 0
+        ? result.rows.map((row: any) => ({
+            field_name: row.field_name,
+            field_type: row.field_type,
+          }))
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Checks if a column is an enum type in PostgreSQL
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @param columnName - The name of the column to check
+   * @returns Promise resolving to a boolean indicating if the column is an enum type
+   */
+  public static async isEnumColumn(
+    knex: knex.Knex,
+    tableName: string,
+    columnName: string,
+  ): Promise<boolean> {
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM pg_type t
+        JOIN pg_enum e ON t.oid = e.enumtypid
+        JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+        JOIN pg_attribute a ON a.atttypid = t.oid
+        JOIN pg_class c ON c.oid = a.attrelid
+        WHERE c.relname = ?
+          AND a.attname = ?
+          AND n.nspname = current_schema()
+      )
+    `;
+
+    try {
+      const result = await knex.raw(query, [tableName, columnName]);
+      return result.rows?.[0]?.exists === true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Retrieves PostgreSQL enum types for a specific table and column
+   * @param knex - The knex instance
+   * @param tableName - The name of the table
+   * @param columnName - The name of the column
+   * @returns Promise resolving to an array of enum values or null if not an enum column
+   */
+  public static async getColumnEnumValues(
+    knex: knex.Knex,
+    tableName: string,
+    columnName: string,
+  ): Promise<string[] | null> {
+    const query = `
+      SELECT t.typname AS enum_name,
+             e.enumlabel AS enum_value
+      FROM pg_type t
+      JOIN pg_enum e ON t.oid = e.enumtypid
+      JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+      JOIN pg_attribute a ON a.atttypid = t.oid
+      JOIN pg_class c ON c.oid = a.attrelid
+      WHERE c.relname = ?
+        AND a.attname = ?
+        AND n.nspname = current_schema()
+      ORDER BY e.enumsortorder
+    `;
+
+    try {
+      const result = await knex.raw(query, [tableName, columnName]);
+      return result.rows.length > 0
+        ? result.rows.map((row: any) => row.enum_value)
+        : null;
+    } catch {
+      return null;
+    }
   }
 }
