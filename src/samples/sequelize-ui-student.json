@@ -1,0 +1,369 @@
+{
+  "id": "jkUK7zC1z_9r095SkC8gp",
+  "name": "student info system",
+  "forkedFrom": "qi75SYu3dn",
+  "createdAt": "2025-10-26T08:52:52.573Z",
+  "updatedAt": "2025-10-26T08:52:52.573Z",
+  "models": [
+    {
+      "id": "CRI968kpqcwV9mjesejsH",
+      "name": "student",
+      "softDelete": false,
+      "createdAt": "2025-10-26T08:52:52.573Z",
+      "updatedAt": "2025-10-26T08:52:52.573Z",
+      "fields": [
+        {
+          "id": "TWQcDZB56LSjjeQTj-1yN",
+          "name": "first name",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "9K5xJqDeXGpM8un9tvlq0",
+          "name": "last name",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "rg6h7MZUNNFKDenzld9VY",
+          "name": "birthdate",
+          "type": {
+            "type": "DATE",
+            "defaultNow": false
+          },
+          "primaryKey": false,
+          "required": false,
+          "unique": false
+        }
+      ],
+      "associations": [
+        {
+          "id": "U4wEObYVw60Fqa6dY0y1m",
+          "sourceModelId": "CRI968kpqcwV9mjesejsH",
+          "targetModelId": "7t0XI-l1oFKjSVyjsqo9H",
+          "alias": "course section",
+          "foreignKey": null,
+          "type": {
+            "type": "MANY_TO_MANY",
+            "targetFk": null,
+            "through": {
+              "type": "THROUGH_MODEL",
+              "modelId": "0qz-0pkT6qC3LVcCe7EZk"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "aZ3V8Aoer084dTsbMlgSA",
+      "name": "teacher",
+      "softDelete": false,
+      "createdAt": "2025-10-26T08:52:52.573Z",
+      "updatedAt": "2025-10-26T08:52:52.573Z",
+      "fields": [
+        {
+          "id": "L-M17uk453SvwVcxp2v8e",
+          "name": "first name",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "qvlEwPIT4rQ3pj6W3N-mb",
+          "name": "last name",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "T5NUz33oRnFIgLTddfkJA",
+          "name": "email",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": true
+        }
+      ],
+      "associations": [
+        {
+          "id": "-BNoTYaLL8D1OCHQUkZTA",
+          "sourceModelId": "aZ3V8Aoer084dTsbMlgSA",
+          "targetModelId": "7t0XI-l1oFKjSVyjsqo9H",
+          "alias": "course section",
+          "foreignKey": null,
+          "type": {
+            "type": "MANY_TO_MANY",
+            "targetFk": null,
+            "through": {
+              "type": "THROUGH_MODEL",
+              "modelId": "srlTjbdQmPbY_IjCbA_e5"
+            }
+          }
+        },
+        {
+          "id": "PY21j_KexJ7-NFeKfaf29",
+          "sourceModelId": "aZ3V8Aoer084dTsbMlgSA",
+          "targetModelId": "srlTjbdQmPbY_IjCbA_e5",
+          "alias": "course section positions",
+          "foreignKey": null,
+          "type": {
+            "type": "HAS_MANY"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B2Zq8EEjSMIvtZqn9WOpl",
+      "name": "course",
+      "softDelete": false,
+      "createdAt": "2025-10-26T08:52:52.573Z",
+      "updatedAt": "2025-10-26T08:52:52.573Z",
+      "fields": [
+        {
+          "id": "DWzAcyUSv4HEUGid48BUt",
+          "name": "name",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "8UzHM7zv1jmG4Nw2XlUmK",
+          "name": "code",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": true
+        }
+      ],
+      "associations": [
+        {
+          "id": "Aqg9FVpAEP7PgUsNe2KTh",
+          "sourceModelId": "B2Zq8EEjSMIvtZqn9WOpl",
+          "targetModelId": "7t0XI-l1oFKjSVyjsqo9H",
+          "alias": "section",
+          "foreignKey": null,
+          "type": {
+            "type": "HAS_MANY"
+          }
+        },
+        {
+          "id": "FQMjy9aE3z8r_NqmTGbtH",
+          "sourceModelId": "B2Zq8EEjSMIvtZqn9WOpl",
+          "targetModelId": "AdX1Gp1a73nEju8ClooE9",
+          "alias": "topic",
+          "foreignKey": null,
+          "type": {
+            "type": "MANY_TO_MANY",
+            "targetFk": null,
+            "through": {
+              "type": "THROUGH_TABLE",
+              "table": "course_topics"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "7t0XI-l1oFKjSVyjsqo9H",
+      "name": "course section",
+      "softDelete": false,
+      "createdAt": "2025-10-26T08:52:52.573Z",
+      "updatedAt": "2025-10-26T08:52:52.573Z",
+      "fields": [
+        {
+          "id": "EiK4UEQjvg5P7gNRLrlnS",
+          "name": "number",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "wrE0nK2Mrf9To_rQuUO9q",
+          "name": "starts at",
+          "type": {
+            "type": "DATE_TIME",
+            "defaultNow": false
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "WaKLn2t4PJbRLZ3ztaIdr",
+          "name": "ends at",
+          "type": {
+            "type": "DATE_TIME",
+            "defaultNow": false
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        }
+      ],
+      "associations": [
+        {
+          "id": "0J8ZGgem4CuCWy66wwpWn",
+          "sourceModelId": "7t0XI-l1oFKjSVyjsqo9H",
+          "targetModelId": "B2Zq8EEjSMIvtZqn9WOpl",
+          "alias": null,
+          "foreignKey": null,
+          "type": {
+            "type": "BELONGS_TO"
+          }
+        },
+        {
+          "id": "dTzHfhQoAvDmjI7Vw_egC",
+          "sourceModelId": "7t0XI-l1oFKjSVyjsqo9H",
+          "targetModelId": "CRI968kpqcwV9mjesejsH",
+          "alias": null,
+          "foreignKey": null,
+          "type": {
+            "type": "MANY_TO_MANY",
+            "targetFk": null,
+            "through": {
+              "type": "THROUGH_MODEL",
+              "modelId": "0qz-0pkT6qC3LVcCe7EZk"
+            }
+          }
+        },
+        {
+          "id": "CFMQbUG6x4v8ftfI-ldHS",
+          "sourceModelId": "7t0XI-l1oFKjSVyjsqo9H",
+          "targetModelId": "aZ3V8Aoer084dTsbMlgSA",
+          "alias": null,
+          "foreignKey": null,
+          "type": {
+            "type": "MANY_TO_MANY",
+            "targetFk": null,
+            "through": {
+              "type": "THROUGH_MODEL",
+              "modelId": "srlTjbdQmPbY_IjCbA_e5"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "0qz-0pkT6qC3LVcCe7EZk",
+      "name": "course section enrollment",
+      "softDelete": false,
+      "createdAt": "2025-10-26T08:52:52.573Z",
+      "updatedAt": "2025-10-26T08:52:52.573Z",
+      "fields": [],
+      "associations": [
+        {
+          "id": "Nzg0HzTjRnC1fNfVookoi",
+          "sourceModelId": "0qz-0pkT6qC3LVcCe7EZk",
+          "targetModelId": "7t0XI-l1oFKjSVyjsqo9H",
+          "alias": null,
+          "foreignKey": null,
+          "type": {
+            "type": "BELONGS_TO"
+          }
+        },
+        {
+          "id": "WLFCrSPtS-vVsCdLPKv-e",
+          "sourceModelId": "0qz-0pkT6qC3LVcCe7EZk",
+          "targetModelId": "CRI968kpqcwV9mjesejsH",
+          "alias": null,
+          "foreignKey": null,
+          "type": {
+            "type": "BELONGS_TO"
+          }
+        }
+      ]
+    },
+    {
+      "id": "srlTjbdQmPbY_IjCbA_e5",
+      "name": "course section position",
+      "softDelete": false,
+      "createdAt": "2025-10-26T08:52:52.573Z",
+      "updatedAt": "2025-10-26T08:52:52.573Z",
+      "fields": [],
+      "associations": [
+        {
+          "id": "EnngmF4CAr07XMLVj4PPG",
+          "sourceModelId": "srlTjbdQmPbY_IjCbA_e5",
+          "targetModelId": "7t0XI-l1oFKjSVyjsqo9H",
+          "alias": null,
+          "foreignKey": null,
+          "type": {
+            "type": "BELONGS_TO"
+          }
+        },
+        {
+          "id": "iZkApeZxIQy9Am0Q9uJOy",
+          "sourceModelId": "srlTjbdQmPbY_IjCbA_e5",
+          "targetModelId": "aZ3V8Aoer084dTsbMlgSA",
+          "alias": null,
+          "foreignKey": null,
+          "type": {
+            "type": "BELONGS_TO"
+          }
+        }
+      ]
+    },
+    {
+      "id": "AdX1Gp1a73nEju8ClooE9",
+      "name": "topic",
+      "softDelete": false,
+      "createdAt": "2025-10-26T08:52:52.573Z",
+      "updatedAt": "2025-10-26T08:52:52.573Z",
+      "fields": [
+        {
+          "id": "r1ekMMZkWja1sbyV_WUIH",
+          "name": "name",
+          "type": {
+            "type": "STRING",
+            "length": 255,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": true
+        }
+      ],
+      "associations": []
+    }
+  ]
+}

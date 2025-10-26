@@ -1,0 +1,22 @@
+module.exports = {
+  /**
+   * Creates the {{ tableName }} table with necessary fields and constraints
+   * @param {Object} queryInterface - The Sequelize query interface
+   * @param {Object} Sequelize - The Sequelize library
+   * @returns {Promise} A promise that resolves when the table is created
+   */
+  up: async (queryInterface, Sequelize) => {
+    {{addConstraints}}await queryInterface.createTable('{{ tableName }}', {
+      {{columns}}
+    }});{{createIndexes}}
+  },
+
+  /**
+   * Drops the {{ tableName }} table
+   * @param {Object} queryInterface - The Sequelize query interface
+   * @returns {Promise} A promise that resolves when the table is dropped
+   */
+  down: async (queryInterface) => {
+    {{dropIndexes}}{{removeConstraints}}await queryInterface.dropTable('{{ tableName }}');
+  },
+};

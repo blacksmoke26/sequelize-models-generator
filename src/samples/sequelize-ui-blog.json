@@ -1,0 +1,139 @@
+{
+  "id": "9M2MKXucsOo_qDzd_yHvL",
+  "name": "public",
+  "forkedFrom": null,
+  "createdAt": "2025-10-26T09:21:02.447Z",
+  "updatedAt": "2025-10-26T09:21:58.624Z",
+  "models": [
+    {
+      "id": "tf6wr0u7Sm0dyOduagedC",
+      "name": "users",
+      "softDelete": false,
+      "createdAt": "2025-10-26T09:21:02.447Z",
+      "updatedAt": "2025-10-26T09:21:02.447Z",
+      "fields": [
+        {
+          "id": "KM5PLO2dTjdjwy9xLEVBF",
+          "name": "email",
+          "type": {
+            "type": "STRING",
+            "length": null,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "vPvaQF1ORAvNFtAGdxTGC",
+          "name": "password",
+          "type": {
+            "type": "STRING",
+            "length": null,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "ayUnot4IwQM9IUroABLul",
+          "name": "auth_key",
+          "type": {
+            "type": "STRING",
+            "length": null,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+
+        {
+          "id": "UC9gD4QibXM7j5vHM2kVE",
+          "name": "password_hash",
+          "type": {
+            "type": "STRING",
+            "length": null,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "O8EO6LLEElTbB65d9WHqo",
+          "name": "first_name",
+          "type": {
+            "type": "STRING",
+            "length": null,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "XG9PM03y8flfgS3AZp1im",
+          "name": "last_name",
+          "type": {
+            "type": "STRING",
+            "length": null,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "dMMpB1JHrCrAEYgMkf4DN",
+          "name": "role",
+          "type": {
+            "type": "STRING",
+            "length": null,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        }
+      ],
+      "associations": []
+    },
+    {
+      "id": "uuPO4CPp7IylwCKuvKCLq",
+      "name": "genres",
+      "softDelete": false,
+      "createdAt": "2025-10-26T09:21:02.447Z",
+      "updatedAt": "2025-10-26T09:21:02.447Z",
+      "fields": [
+        {
+          "id": "ZkAGzhR3mg7rNMWHYSfs3",
+          "name": "movie_id",
+          "type": {
+            "type": "BIGINT",
+            "unsigned": false,
+            "autoincrement": false,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": true,
+          "unique": false
+        },
+        {
+          "id": "U7eD2Xd0TKP7H7B1wO3jL",
+          "name": "name",
+          "type": {
+            "type": "STRING",
+            "length": null,
+            "defaultValue": null
+          },
+          "primaryKey": false,
+          "required": false,
+          "unique": false
+        }
+      ],
+      "associations": []
+    }
+  ]
+}
