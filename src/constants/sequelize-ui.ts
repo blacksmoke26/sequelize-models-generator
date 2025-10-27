@@ -1,29 +1,40 @@
+/**
+ * @author Junaid Atari <mj.atari@gmail.com>
+ * @see https://github.com/blacksmoke26
+ * @copyright 2025 Junaid Atari
+ */
 
-export const DataTypeType = {
-  String: 'STRING',
-  Text: 'TEXT',
-  CiText: 'CITEXT',
-  Integer: 'INTEGER',
-  BigInt: 'BIGINT',
-  SmallInt: 'SMALLINT',
-  Float: 'FLOAT',
-  Real: 'REAL',
-  Double: 'DOUBLE',
-  Decimal: 'DECIMAL',
-  DateTime: 'DATE_TIME',
-  Date: 'DATE',
-  Time: 'TIME',
-  Boolean: 'BOOLEAN',
-  Enum: 'ENUM',
-  Array: 'ARRAY',
-  Json: 'JSON',
-  JsonB: 'JSONB',
-  Blob: 'BLOB',
-  Uuid: 'UUID',
-  Xml: 'XML',
-};
+/**
+ * Enum representing standardized data types for database columns.
+ */
+export enum DataTypeType {
+  String = 'STRING',
+  Text = 'TEXT',
+  CiText = 'CITEXT',
+  Integer = 'INTEGER',
+  BigInt = 'BIGINT',
+  SmallInt = 'SMALLINT',
+  Float = 'FLOAT',
+  Real = 'REAL',
+  Double = 'DOUBLE',
+  Decimal = 'DECIMAL',
+  DateTime = 'DATE_TIME',
+  Date = 'DATE',
+  Time = 'TIME',
+  Boolean = 'BOOLEAN',
+  Enum = 'ENUM',
+  Array = 'ARRAY',
+  Json = 'JSON',
+  JsonB = 'JSONB',
+  Blob = 'BLOB',
+  Uuid = 'UUID',
+}
 
-const typeMap: Record<string, string> = {
+/**
+ * Mapping of PostgreSQL data types to standardized DataTypeType enum values.
+ * @see https://www.postgresql.org/docs/current/datatype.html
+ */
+const typeMap: Record<string, DataTypeType> = {
   // Numeric types
   smallint: DataTypeType.SmallInt,
   integer: DataTypeType.Integer,
@@ -91,12 +102,12 @@ const typeMap: Record<string, string> = {
   uuid: DataTypeType.Uuid,
 
   // XML and JSON
-  xml: DataTypeType.Xml,
+  xml: DataTypeType.String,
   json: DataTypeType.Json,
   jsonb: DataTypeType.JsonB,
 
   // Arrays (handled as arrays of the base type)
-  'array': DataTypeType.Array,
+  array: DataTypeType.Array,
   'integer[]': DataTypeType.Array,
   'text[]': DataTypeType.Array,
   'boolean[]': DataTypeType.Array,
@@ -125,6 +136,28 @@ const typeMap: Record<string, string> = {
   default: DataTypeType.String,
 } as const;
 
-export const toTypeFromPostgresType = (pgType: string) => {
+/**
+ * Converts a PostgreSQL data type string to its corresponding DataTypeType enum value.
+ * @param pgType - The PostgreSQL data type string.
+ * @returns The corresponding DataTypeType enum value. Defaults to DataTypeType.String if not found.
+ */
+export const toTypeFromPostgresType = (pgType: string): DataTypeType => {
   return typeMap[pgType] ?? DataTypeType.String;
 };
+
+/**
+ * Checks if a given PostgreSQL data type string represents a date/time column.
+ * @param type - The PostgreSQL data type string to check.
+ * @returns True if the type is a date/time type, false otherwise.
+ */
+export const isDateTimeColumn = (type: string) =>
+  [
+    'date',
+    'time',
+    'time without time zone',
+    'time with time zone',
+    'timestamp',
+    'timestamp without time zone',
+    'timestamp with time zone',
+    'timestamptz',
+  ].includes(type);
