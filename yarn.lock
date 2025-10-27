@@ -1241,6 +1241,11 @@
     change-case "^4.1.2"
     prettier "^2.8.8"
 
+"@cpmech/js2ts@^2.32.1":
+  version "2.32.1"
+  resolved "https://registry.yarnpkg.com/@cpmech/js2ts/-/js2ts-2.32.1.tgz#6a769888710309cfcaa21932e24863f25f0c5ec5"
+  integrity sha512-UyHkCSDqYroW2T036va9VoGGO7pxZsdtXkmPwMB3OWpB65p65DjIYw7IjNsi0551LJ43NGAbpb1MN8TrSAdOqg==
+
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
   resolved "https://registry.npmjs.org/@cspotcode/source-map-support/-/source-map-support-0.8.1.tgz"
@@ -1338,6 +1343,11 @@
     "@eslint/core" "^0.16.0"
     levn "^0.4.1"
 
+"@glideapps/ts-necessities@2.1.3":
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/@glideapps/ts-necessities/-/ts-necessities-2.1.3.tgz#502beb495fad73cb6576ece1ffdb62023cacc9d5"
+  integrity sha512-q9U8v/n9qbkd2zDYjuX3qtlbl+OIyI9zF+zQhZjfYOE9VMDH7tfcUSJ9p0lXoY3lxmGFne09yi4iiNeQUwV7AA==
+
 "@glideapps/ts-necessities@2.2.3":
   version "2.2.3"
   resolved "https://registry.npmjs.org/@glideapps/ts-necessities/-/ts-necessities-2.2.3.tgz"
@@ -1347,6 +1357,14 @@
   version "2.4.0"
   resolved "https://registry.npmjs.org/@glideapps/ts-necessities/-/ts-necessities-2.4.0.tgz"
   integrity sha512-mDC+qosuNa4lxR3ioMBb6CD0XLRsQBplU+zRPUYiMLXKeVPZ6UYphdNG/EGReig0YyfnVlBKZEXl1wzTotYmPA==
+
+"@hacxy/json2ts@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@hacxy/json2ts/-/json2ts-0.3.0.tgz#695e66b53bda3ce150e5f74ade8be79054efe62f"
+  integrity sha512-s8lmkVjtImE/W49YbtjvhJzlD24VwplFtjybC1icKEB70+EQ1bDRBXpUai/DOyCO64y2AAZ7RHwVi8pjIoSSIQ==
+  dependencies:
+    quicktype-core "23.0.146"
+    typescript "5.4.5"
 
 "@humanfs/core@^0.19.1":
   version "0.19.1"
@@ -2206,6 +2224,11 @@
     "@types/methods" "^1.1.4"
     "@types/superagent" "^8.1.0"
 
+"@types/urijs@^1.19.25":
+  version "1.19.26"
+  resolved "https://registry.yarnpkg.com/@types/urijs/-/urijs-1.19.26.tgz#500fc9912e0ba01d635480970bdc9ba0f45d7bc6"
+  integrity sha512-wkXrVzX5yoqLnndOwFsieJA7oKM8cNkOKJtf/3vVGSUFkWDKZvFHpIl9Pvqb/T9UsawBBFMTTD8xu7sK5MWuvg==
+
 "@types/validator@^13.7.17":
   version "13.15.3"
   resolved "https://registry.npmjs.org/@types/validator/-/validator-13.15.3.tgz"
@@ -2332,6 +2355,11 @@
   dependencies:
     "@typescript-eslint/types" "8.46.2"
     eslint-visitor-keys "^4.2.1"
+
+"@typeweaver/json2ts@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@typeweaver/json2ts/-/json2ts-1.0.4.tgz#9ce53b110ada5bf1d7a9a6c880091e98ae205abc"
+  integrity sha512-DVUSE5ZDTaK5gYJEiNxH2oe4vTGhhuB5P2MJI8fDdVnvqoTNoq6975upXnGstu4WA/lTCsGG6dWMjOtKIustlg==
 
 "@ungap/structured-clone@^1.3.0":
   version "1.3.0"
@@ -2753,6 +2781,11 @@ braces@^3.0.3, braces@~3.0.2:
   integrity sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==
   dependencies:
     fill-range "^7.1.1"
+
+browser-or-node@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/browser-or-node/-/browser-or-node-2.1.1.tgz#738790b3a86a8fc020193fa581273fbe65eaea0f"
+  integrity sha512-8CVjaLJGuSKMVTxJ2DpBl5XnlNDiT4cQFeuCJJrvJmts9YrTZDizTX7PjC2s6W4x+MBGZeEY6dGMrF04/6Hgqg==
 
 browser-or-node@^3.0.0:
   version "3.0.0"
@@ -3936,6 +3969,11 @@ get-proto@^1.0.1:
     dunder-proto "^1.0.1"
     es-object-atoms "^1.0.0"
 
+get-stdin@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/get-stdin/-/get-stdin-5.0.1.tgz#122e161591e21ff4c52530305693f20e6393a398"
+  integrity sha512-jZV7n6jGE3Gt7fgSTJoz91Ak5MuTLwMwkoYdjxuJ/AmjIsE1UC03y/IWkZCQGEvVNS9qoRNwy5BCqxImv0FVeA==
+
 get-stream@^6.0.0:
   version "6.0.1"
   resolved "https://registry.npmjs.org/get-stream/-/get-stream-6.0.1.tgz"
@@ -4169,6 +4207,11 @@ ignore@^7.0.0:
   version "7.0.5"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-7.0.5.tgz#4cb5f6cd7d4c7ab0365738c7aea888baa6d7efd9"
   integrity sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==
+
+immutable@^3.8.1:
+  version "3.8.2"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
+  integrity sha512-15gZoQ38eYjEjxkorfbcgBKBL6R7T459OuK+CpcWt7O3KF4uPCx2tD0uFETlUDIyo+1789crbMhTvQBSR5yBMg==
 
 import-fresh@^3.2.1:
   version "3.3.0"
@@ -4935,6 +4978,18 @@ json-stable-stringify-without-jsonify@^1.0.1:
   resolved "https://registry.npmjs.org/json-stable-stringify-without-jsonify/-/json-stable-stringify-without-jsonify-1.0.1.tgz"
   integrity sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==
 
+json-ts@^1.6.4:
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/json-ts/-/json-ts-1.6.4.tgz#e4423b8ccdb3069306f4727d6a579790675abbd0"
+  integrity sha512-NFsb12aYB3v2W14UOX6zcYvfrkFmwJWlzGrmKFlRQtJujtnpAKFRvVem4L30MvJjJQmOKDUTRIgLUAE4UTFqRg==
+  dependencies:
+    get-stdin "^5.0.1"
+    immutable "^3.8.1"
+    minimist "^1.2.0"
+    needsquotes "^1.0.0"
+    transducers-js "^0.4.174"
+    typescript "^2.3.2"
+
 json5@^2.2.3:
   version "2.2.3"
   resolved "https://registry.npmjs.org/json5/-/json5-2.2.3.tgz"
@@ -5208,7 +5263,7 @@ minimatch@^9.0.4:
   dependencies:
     brace-expansion "^2.0.1"
 
-minimist@^1.2.5:
+minimist@^1.2.0, minimist@^1.2.5:
   version "1.2.8"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.8.tgz#c1a464e7693302e082a075cee0c057741ac4772c"
   integrity sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==
@@ -5286,6 +5341,11 @@ natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz"
   integrity sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==
+
+needsquotes@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/needsquotes/-/needsquotes-1.0.0.tgz#f54f90ff2ad3f5c1fc90236804639f849b924fad"
+  integrity sha512-9s1L/CCkVzc6DkK2OHsI+ltpPHxW4RvAYOcAV/AqSUlO5knDR3QjPeBeHeCryw6BCpRx0EtNBnEVkwYRCZvlkg==
 
 neo-async@^2.6.2:
   version "2.6.2"
@@ -5906,6 +5966,27 @@ queue-microtask@^1.2.2:
   version "1.2.3"
   resolved "https://registry.npmjs.org/queue-microtask/-/queue-microtask-1.2.3.tgz"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
+
+quicktype-core@23.0.146:
+  version "23.0.146"
+  resolved "https://registry.yarnpkg.com/quicktype-core/-/quicktype-core-23.0.146.tgz#a2cb20ff4989f73f41304b79f321cf8e6f3af56c"
+  integrity sha512-JqyvdlZtSBxW+O0Nd5S2n6KF4cgKIkwjY54feQfpFX8adMnklTPi+8wdD9kce2Wmfykl+iSAQ853PaObkk6fwA==
+  dependencies:
+    "@glideapps/ts-necessities" "2.1.3"
+    "@types/urijs" "^1.19.25"
+    browser-or-node "^2.1.1"
+    collection-utils "^1.0.1"
+    cross-fetch "^4.0.0"
+    is-url "^1.2.4"
+    js-base64 "^3.7.7"
+    lodash "^4.17.21"
+    pako "^1.0.6"
+    pluralize "^8.0.0"
+    readable-stream "4.5.2"
+    unicode-properties "^1.4.1"
+    urijs "^1.19.1"
+    wordwrap "^1.0.0"
+    yaml "^2.4.1"
 
 quicktype-core@23.2.6, quicktype-core@^23.2.6:
   version "23.2.6"
@@ -6744,6 +6825,11 @@ tr46@~0.0.3:
   resolved "https://registry.npmjs.org/tr46/-/tr46-0.0.3.tgz"
   integrity sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==
 
+transducers-js@^0.4.174:
+  version "0.4.174"
+  resolved "https://registry.yarnpkg.com/transducers-js/-/transducers-js-0.4.174.tgz#d5862c10eff4be3d3322abf6bb742e30f1bb6fc4"
+  integrity sha512-MwhBNx6TDMrS/pfCa24YzCfC1+W3LcFC0YoF5XNpuZC1pEjuGLP2B0iMt/bYO3rnClhd3dN3c3Ko4+JhOBLoLw==
+
 ts-api-utils@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/ts-api-utils/-/ts-api-utils-2.1.0.tgz#595f7094e46eed364c13fd23e75f9513d29baf91"
@@ -6897,6 +6983,16 @@ typescript@4.9.5:
   version "4.9.5"
   resolved "https://registry.npmjs.org/typescript/-/typescript-4.9.5.tgz"
   integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
+
+typescript@5.4.5:
+  version "5.4.5"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.4.5.tgz#42ccef2c571fdbd0f6718b1d1f5e6e5ef006f611"
+  integrity sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==
+
+typescript@^2.3.2:
+  version "2.9.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.9.2.tgz#1cbf61d05d6b96269244eb6a3bce4bd914e0f00c"
+  integrity sha512-Gr4p6nFNaoufRIY4NMdpQRNmgxVIGMs4Fcu/ujdYk3nAZqk7supzBE9idmvfZIlH/Cuj//dvi+019qEue9lV0w==
 
 typescript@^5.5.4, typescript@^5.9.3:
   version "5.9.3"
