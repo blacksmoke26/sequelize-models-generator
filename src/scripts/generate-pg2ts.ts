@@ -81,7 +81,7 @@ async function generateModels() {
       const tsType = pgSequelizeTypeMap[col.data_type] ?? 'DataTypes.STRING';
       const allowNull = col.is_nullable === 'YES';
 
-      let defaultValueString: string = DatabaseUtils.escapeDefaultValue(col.column_default);
+      const defaultValueString: string = DatabaseUtils.escapeDefaultValue(col.column_default);
 
       const defaultValue = defaultValueString.trim()
         ? `      defaultValue: ${defaultValueString},\n`
