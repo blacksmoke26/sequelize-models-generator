@@ -1,3 +1,9 @@
+/**
+ * @author Junaid Atari <mj.atari@gmail.com>
+ * @copyright 2025 Junaid Atari
+ * @see https://github.com/blacksmoke26
+ */
+
 import knex from 'knex';
 
 // types
@@ -14,12 +20,12 @@ export type KnexTableColumnsInfo = Record<string, KnexTableColumnInfo>;
 export interface KnexTableColumnInfo {
   /** The data type of the column */
   type: string;
-  /** Array of column names (used for composite keys or multi-column indexes) */
-  columns: string[];
-  /** Flag indicating whether the column has a unique constraint */
-  isUnique: boolean;
-  /** Flag indicating whether the column is part of the primary key */
-  isPrimary: boolean;
+  /** The maximum length of the column, or null if not applicable */
+  maxLength: number | null;
+  /** Whether the column can contain null values */
+  nullable: boolean;
+  /** The default value of the column, or null if not set */
+  defaultValue: string | null;
 }
 
 /**
