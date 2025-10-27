@@ -15,6 +15,7 @@ import {
   dateDataType,
   dateTimeDataType,
   decimalDataType,
+  DefaultJsonValue,
   doubleDataType,
   enumDataType,
   floatDataType,
@@ -33,69 +34,77 @@ import { toTypeFromPostgresType } from '~/constants/sequelize-ui';
 
 // types
 import type { ColumnInfo } from '~/classes/TableColumns';
+import SequelizeParser from '~/parsers/SequelizeParser';
 
 const resolvedDataTypeOptions = (columnInfo: ColumnInfo): DataType => {
+  const [precision = null, scale = null] = SequelizeParser.parseTypeParams(columnInfo.sequelizeTypeParams);
+  const defaultValue: unknown | null = !columnInfo?.defaultValue || columnInfo?.defaultValue === '' ? null : columnInfo?.defaultValue;
+  const defaultValueIsNull: boolean = defaultValue === null;
+
   const uiType = toTypeFromPostgresType(columnInfo.type);
 
   switch (uiType) {
     case DataTypeType.Text:
-      return textDataType({ defaultValue: columnInfo.defaultValue as string});
+      return textDataType({ defaultValue: columnInfo.defaultValue as string });
 
     case DataTypeType.CiText:
       return ciTextDataType({});
 
     case DataTypeType.Integer:
       return integerDataType({
-        defaultValue: +columnInfo.defaultValue,
+        defaultValue: !defaultValueIsNull ? Number(defaultValue) : null,
         autoincrement: columnInfo.flags.autoIncrement,
       });
 
-    case DataTypeType.BigInt:
+    case DataTypeType.BigInt: {
       return bigIntDataType({
-        defaultValue: +columnInfo.defaultValue,
+        defaultValue: !defaultValueIsNull ? Number(defaultValue) : null,
         autoincrement: columnInfo.flags.autoIncrement,
       });
+    }
 
     case DataTypeType.SmallInt:
       return smallIntDataType({
-        defaultValue: +columnInfo.defaultValue,
+        defaultValue: !defaultValueIsNull ? Number(defaultValue) : null,
         autoincrement: columnInfo.flags.autoIncrement,
       });
 
     case DataTypeType.Float:
       return floatDataType({
-        defaultValue: +columnInfo.defaultValue,
+        defaultValue: !defaultValueIsNull ? Number(defaultValue) : null,
       });
 
     case DataTypeType.Real:
-      return realDataType({ defaultValue: +columnInfo.defaultValue });
+      return realDataType({ defaultValue: !defaultValueIsNull ? Number(defaultValue) : null });
 
     case DataTypeType.Double:
       return doubleDataType({
-        defaultValue: +columnInfo.defaultValue,
+        defaultValue: !defaultValueIsNull ? Number(defaultValue) : null,
       });
 
-    case DataTypeType.Decimal:
-      return decimalDataType({
-        defaultValue: +columnInfo.defaultValue,
-        //precision: {
-          //precision: columnInfo.numericPrecision,
-          //scale: columnInfo.numericScale,
-        //},
+    case DataTypeType.Decimal: {
+      const data = decimalDataType({
+        defaultValue: !defaultValueIsNull ? Number(defaultValue) : null,
+        precision: {precision: 0, scale: null}
       });
 
+      if (precision) data.precision.precision = +precision;
+      if (scale) data.precision.scale = +scale;
+
+      return data;
+    }
     case DataTypeType.DateTime:
-      return dateTimeDataType({defaultNow: columnInfo.flags.defaultNow});
+      return dateTimeDataType({ defaultNow: columnInfo?.flags?.defaultNow ?? false });
 
     case DataTypeType.Date:
-      return dateDataType({defaultNow: columnInfo.flags.defaultNow});
+      return dateDataType({ defaultNow: columnInfo?.flags?.defaultNow ?? false });
 
     case DataTypeType.Time:
-      return timeDataType({defaultNow: columnInfo.flags.defaultNow});
+      return timeDataType({ defaultNow: columnInfo?.flags?.defaultNow ?? false });
 
     case DataTypeType.Boolean:
       return booleanDataType({
-        defaultValue: columnInfo.defaultValue === 'true',
+        defaultValue: null,
       });
 
     case DataTypeType.Enum:
@@ -104,11 +113,29 @@ const resolvedDataTypeOptions = (columnInfo: ColumnInfo): DataType => {
     case DataTypeType.Array:
       return arrayDataType({});
 
-    case DataTypeType.Json:
-      return jsonDataType({ defaultValue: JSON.parse(columnInfo.defaultValue as string) });
+    case DataTypeType.Json: {
+      const data = jsonDataType({ defaultValue: null });
 
-    case DataTypeType.JsonB:
-      return jsonBDataType({ defaultValue: JSON.parse(columnInfo.defaultValue as string) });
+      if (String(defaultValue).startsWith('{')) {
+        data.defaultValue = DefaultJsonValue.EmptyObject;
+      } else if (String(defaultValue).startsWith('[')) {
+        data.defaultValue = DefaultJsonValue.EmptyArray;
+      }
+
+      return data;
+    }
+
+    case DataTypeType.JsonB: {
+      const data = jsonBDataType({ defaultValue: null });
+
+      if (String(defaultValue).startsWith('{')) {
+        data.defaultValue = DefaultJsonValue.EmptyObject;
+      } else if (String(defaultValue).startsWith('[')) {
+        data.defaultValue = DefaultJsonValue.EmptyArray;
+      }
+
+      return data;
+    }
 
     case DataTypeType.Blob:
       return blobDataType();
@@ -117,11 +144,16 @@ const resolvedDataTypeOptions = (columnInfo: ColumnInfo): DataType => {
       return uuidDataType({ defaultVersion: UuidType.V4 });
 
     case DataTypeType.String:
-    default:
-      return stringDataType({
-        //length: columnInfo.maxLength,
-        defaultValue: columnInfo.defaultValue as string,
-      });
+    default: {
+      const data = stringDataType({ defaultValue: null });
+      if (precision) data.length = +precision;
+
+      if (!defaultValueIsNull) {
+        data.defaultValue = String(defaultValue).replaceAll(`'`, '');
+      }
+
+      return data;
+    }
   }
 };
 
