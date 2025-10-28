@@ -1,11 +1,12 @@
 import 'dotenv/config';
 
 import SequelizeAuto from 'sequelize-auto';
+import { DIST_DIR } from '~/constants/file-system';
 
 const auto = new SequelizeAuto(process.env.DATABASE_NAME, process.env.DATABASE_USERNAME, process.env.DATABASE_PASSWORD, {
   host: process.env.DATABASE_HOST,
   dialect: 'postgres',
-  directory: '../../models-auto', // where to write files
+  directory: DIST_DIR + '/models-auto', // where to write files
   // @ts-expect-error skip port
   port: '5432',
   lang: 'ts',
