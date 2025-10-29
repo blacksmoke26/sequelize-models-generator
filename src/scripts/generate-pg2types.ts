@@ -1,8 +1,16 @@
+/**
+ * @author Junaid Atari <mj.atari@gmail.com>
+ * @copyright 2025 Junaid Atari
+ * @see https://github.com/blacksmoke26
+ */
+
 import 'dotenv/config';
 
 import { Client, types } from 'pg';
 import { builtins } from 'pg-types';
-import { getConnectionString } from '~/constants/file-system';
+
+// helpers
+import EnvHelper from '~/helpers/EnvHelper';
 
 async function run() {
   types.setTypeParser(20, function (val) {
@@ -10,7 +18,7 @@ async function run() {
   });
 
   const client = new Client({
-    connectionString: getConnectionString(),
+    connectionString: EnvHelper.getConnectionString(),
   });
 
   await client.connect();

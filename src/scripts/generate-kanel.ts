@@ -1,11 +1,22 @@
+/**
+ * @author Junaid Atari <mj.atari@gmail.com>
+ * @copyright 2025 Junaid Atari
+ * @see https://github.com/blacksmoke26
+ */
+
 import 'dotenv/config';
 
 import kanel from 'kanel';
-import {DIST_DIR, getConnectionString} from '~/constants/file-system';
+
+// utils
+import {DIST_DIR} from '~/constants/file-system';
+
+// helpers
+import EnvHelper from '~/helpers/EnvHelper';
 
 async function run() {
   await kanel.processDatabase({
-    connection: getConnectionString(),
+    connection: EnvHelper.getConnectionString(),
     outputPath: `${DIST_DIR}/kanel`
   });
 
