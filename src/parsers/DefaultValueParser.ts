@@ -14,34 +14,6 @@ import { TableColumnInfo } from '~/typings/knex';
  */
 export default abstract class DefaultValueParser {
   /**
-   * Determines if the default value of a column is a current timestamp/date/time.
-   *
-   * @param sequelizeType - The Sequelize type of the column.
-   * @param columnInfo - Information about the database column, including its default value.
-   * @returns True if the default value is a current timestamp/date/time, otherwise false.
-   *
-   * @example
-   * // For a TIME column with default value 'CURRENT_TIME'
-   * const result = DefaultValueParser.isDefaultNow('TIME', { column_default: 'CURRENT_TIME' });
-   * // Returns true
-   *
-   * @example
-   * // For a STRING column with default value 'hello'
-   * const result = DefaultValueParser.isDefaultNow('STRING', { column_default: '\'hello\'' });
-   * // Returns false
-   */
-  public static isDefaultNow(
-    sequelizeType: SequelizeType,
-    columnInfo: TableColumnInfo,
-  ): boolean {
-    return (
-      (['TIME', 'DATE', 'DATEONLY'] as SequelizeType[]).includes(
-        sequelizeType,
-      ) && columnInfo?.column_default?.startsWith?.('CURRENT_')
-    );
-  }
-
-  /**
    * Parses the default value of a database column and converts it to a JavaScript-compatible string representation.
    *
    * @param sequelizeType - The Sequelize type of the column.
@@ -121,5 +93,29 @@ export default abstract class DefaultValueParser {
     }
 
     return newValue;
+  }
+
+  /**
+   * Processes and escapes default values from the database
+   * @param value - The raw default value from the database
+   * @returns The processed default value
+   */
+  public static parseString(value: string): string {
+    let defaultValueString = String(value);
+    if (defaultValueString.includes('::')) {
+      defaultValueString = defaultValueString.replace(/::.+$/i, '');
+    }
+
+    if (defaultValueString === 'CURRENT_TIMESTAMP') {
+      defaultValueString = 'null';
+    } else if (defaultValueString.toUpperCase().includes('ARRAY')) {
+      defaultValueString = '[]';
+    } else if (defaultValueString.toUpperCase().includes('NULL')) {
+      defaultValueString = 'null';
+    } else if (defaultValueString.startsWith('nextval')) {
+      defaultValueString = '';
+    }
+
+    return defaultValueString.replace(/^'/, '').replace(/'$/, '');
   }
 }
