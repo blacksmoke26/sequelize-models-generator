@@ -5,13 +5,12 @@
  */
 
 import Case from 'case';
-import knex from 'knex';
+import { Knex } from 'knex';
 
 // utils
-import DatabaseUtils from './DatabaseUtils';
-import TypeUtils from './TypeUtils';
-
+import DbUtils from '~/classes/DbUtils';
 import ColumnInfoUtils from '~/classes/ColumnInfoUtils';
+import ExclusiveTableInfoUtils from '~/classes/ExclusiveTableInfoUtils';
 
 // parsers
 import SequelizeParser from '~/parsers/SequelizeParser';
@@ -83,81 +82,53 @@ export default abstract class TableColumns {
    * Retrieves detailed column information including type mappings and comments
    * @param knex - The knex instance
    * @param tableName - The name of the table
+   * @param [schemaName] - The name of the schema
    * @returns Promise resolving to an array of ColumnInfo objects
    */
-  public static async list(
-    knex: knex.Knex,
-    tableName: string,
-  ): Promise<ColumnInfo[]> {
-    const columns = await DatabaseUtils.getKnexTableColumnsInfo(
-      knex,
-      tableName,
-    );
+  public static async list(knex: Knex, tableName: string, schemaName: string = 'public'): Promise<ColumnInfo[]> {
+    const columnInfos: ColumnInfo[] = [];
+    const tableColumns = await DbUtils.getExclusiveTableInfo(knex, tableName, schemaName);
 
-    const list: ColumnInfo[] = [];
+    for (const columnInfo of tableColumns) {
+      const { name, column, element, info } = columnInfo;
 
-    for await (const [name, info] of Object.entries(columns)) {
-      const columnType = info.type.toLowerCase();
-      const columnInfo = await DatabaseUtils.getColumnInfo(
-        knex,
-        tableName,
-        name,
-      );
+      const columnType = element.dataType.toLowerCase();
 
-      const [sequelizeType, sequelizeTypeParams] = await SequelizeParser.parse(
-        knex,
-        columnType,
-        columnInfo,
-      );
+      const [sequelizeType = null, sequelizeTypeParams = null] = SequelizeParser.parse(columnInfo) || [];
 
-      const defaultValue = DefaultValueParser.parse(
-        sequelizeType,
-        columnType,
-        columnInfo,
-      ) as string;
+      const defaultValue = DefaultValueParser.parse(sequelizeType, columnType, info) as string;
 
-      list.push({
+      columnInfos.push({
         name,
         propertyName: Case.camel(name),
-        type: info.type,
-        udtName: ColumnInfoUtils.toUdtType(columnInfo),
-        comment: await DatabaseUtils.getColumnComment(knex, tableName, name),
-        defaultValueRaw: info.defaultValue,
-        defaultValue,
+        type: columnType,
+        udtName: ColumnInfoUtils.toUdtType(info),
+        comment: column.comment,
         sequelizeType,
         sequelizeTypeParams,
+        defaultValueRaw: info.column_default,
+        defaultValue,
         tsType: TypeScriptTypeParser.parse({
           columnType,
-          columnInfo,
+          columnInfo: info,
           sequelizeType,
           sequelizeTypeParams,
         }),
-        tsInterface: TypeUtils.jsonToTypescript({
-          columnType: info.type,
+        tsInterface: TypeScriptTypeParser.jsonToInterface({
+          columnType: columnType,
           columnName: name,
           tableName,
           defaultValue,
         }),
         flags: {
-          nullable: info.nullable,
-          primary: await DatabaseUtils.isPrimaryKeyColumn(
-            knex,
-            tableName,
-            name,
-          ),
-          autoIncrement: await DatabaseUtils.isAutoIncrementColumn(
-            knex,
-            tableName,
-            name,
-          ),
-          defaultNow: DefaultValueParser.isDefaultNow(
-            sequelizeType,
-            columnInfo,
-          ),
+          nullable: column.nullable,
+          primary: ExclusiveTableInfoUtils.isPrimaryKey(columnInfo),
+          autoIncrement: ExclusiveTableInfoUtils.isSerialKey(columnInfo),
+          defaultNow: ExclusiveTableInfoUtils.isDefaultNow(columnInfo),
         },
       });
     }
 
-    return list;
+    return columnInfos;
   }
 }
