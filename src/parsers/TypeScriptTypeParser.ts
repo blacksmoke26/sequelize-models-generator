@@ -4,15 +4,28 @@
  * @see https://github.com/blacksmoke26
  */
 
-// classes
-import ColumnInfoUtils from '~/classes/ColumnInfoUtils';
+import { convertJsonToTs } from '@typeweaver/json2ts';
 
 // utils
 import { getJsType } from '~/constants/pg';
+import TableUtils from '~/classes/TableUtils';
+import TypeUtils from '~/classes/TypeUtils';
+import ColumnInfoUtils from '~/classes/ColumnInfoUtils';
 
 // types
 import type { TableColumnInfo } from '~/typings/knex';
 import type { SequelizeType } from '~/constants/sequelize';
+
+interface JsonToTypescriptParams {
+  /** The SQL column type */
+  columnType: string;
+  /** The default value of the column */
+  defaultValue: string;
+  /** The name of the table */
+  tableName: string;
+  /** The name of the column */
+  columnName: string;
+}
 
 /**
  * Interface for arguments passed to the TypeScript type parser.
@@ -49,5 +62,23 @@ export default abstract class TypeScriptTypeParser {
     }
 
     return jsType;
+  }
+
+  /**
+   * Converts a JSON column to TypeScript interfaces
+   * @param params - The detailed params containing column information
+   * @returns TypeScript type definition if column is JSON/JSONB, otherwise the default value
+   */
+  public static jsonToInterface(
+    params: JsonToTypescriptParams,
+  ): string | null {
+    const { columnType, tableName, columnName, defaultValue } = params;
+
+    return !TypeUtils.isJSON(columnType)
+      ? defaultValue
+      : convertJsonToTs(
+        JSON.parse(defaultValue === 'null' ? '{}' : defaultValue),
+        TableUtils.toJsonColumnTypeName(tableName, columnName),
+      );
   }
 }
