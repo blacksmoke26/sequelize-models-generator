@@ -96,7 +96,7 @@ export default abstract class TableColumns {
 
       const [sequelizeType = null, sequelizeTypeParams = null] = SequelizeParser.parse(columnInfo) || [];
 
-      const defaultValue = DefaultValueParser.parse(sequelizeType, columnType, info) as string;
+      const defaultValue = DefaultValueParser.parse(sequelizeType, columnInfo) as string;
 
       columnInfos.push({
         name,

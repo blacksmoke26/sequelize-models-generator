@@ -6,6 +6,7 @@
 
 import { SequelizeType } from '~/constants/sequelize';
 import { TableColumnInfo } from '~/typings/knex';
+import { ExclusiveColumnInfo } from '~/classes/DbUtils';
 
 /**
  * Utility class for parsing and handling default values from database columns.
@@ -17,7 +18,6 @@ export default abstract class DefaultValueParser {
    * Parses the default value of a database column and converts it to a JavaScript-compatible string representation.
    *
    * @param sequelizeType - The Sequelize type of the column.
-   * @param pgType - The PostgreSQL type of the column (currently unused but kept for compatibility).
    * @param columnInfo - Information about the database column, including its default value.
    * @returns A string representation of the default value suitable for use in JavaScript/TypeScript code.
    *
@@ -38,10 +38,9 @@ export default abstract class DefaultValueParser {
    */
   public static parse(
     sequelizeType: SequelizeType,
-    pgType: string,
-    columnInfo: TableColumnInfo,
-  ): unknown {
-    const value = String(columnInfo?.column_default || '').trim();
+    columnInfo: ExclusiveColumnInfo,
+  ): string | boolean | null {
+    const value = String(columnInfo?.info?.column_default || '').trim();
 
     let newValue = value;
 
@@ -51,20 +50,16 @@ export default abstract class DefaultValueParser {
     }
 
     // Remove quotes from string values
-    newValue = newValue.replace(/^'/, '').replace(/'$/, '');
+    newValue = newValue.replace(/^'/, '').replace(/'$/, '').trim();
+
+    // Treat empty values as null
+    // Remove PostgreSQL sequence function calls
+    if (!newValue.length || newValue.includes('nextval')) {
+      return null;
+    }
 
     if (['JSON', 'JSONB'].includes(sequelizeType)) {
       return !newValue?.trim?.() || value === 'null' ? '{}' : newValue;
-    }
-
-    // Remove PostgreSQL sequence function calls
-    if (newValue.includes('nextval')) {
-      return '';
-    }
-
-    // Handle CURRENT_TIMESTAMP
-    if (newValue === 'CURRENT_TIMESTAMP') {
-      return 'null';
     }
 
     // Handle array types
@@ -73,12 +68,13 @@ export default abstract class DefaultValueParser {
     }
 
     // Handle NULL values
-    if (newValue.toUpperCase().includes('NULL')) {
+    if (newValue === 'CURRENT_TIMESTAMP' || newValue.toUpperCase().includes('NULL')) {
       return 'null';
     }
 
     // Handle boolean values
     if (sequelizeType === 'BOOLEAN') {
+      // TODO Proper handle the value based on type
       return newValue === 'true';
     }
 
