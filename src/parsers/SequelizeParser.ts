@@ -25,7 +25,7 @@ export default abstract class SequelizeParser {
    * @returns An array of parsed parameters as strings.
    */
   public static parseTypeParams(paramType: string): string[] {
-    const matches = paramType.match(/(\d+)(?:,(\d+))?/);
+    const matches = paramType?.match?.(/(\d+)(?:,(\d+))?/) ?? null;
     if (!matches) {
       return [];
     }
