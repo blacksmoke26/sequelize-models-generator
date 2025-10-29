@@ -4,9 +4,9 @@
  * @see https://github.com/blacksmoke26
  */
 
-import { SequelizeType } from '~/constants/sequelize';
-import { TableColumnInfo } from '~/typings/knex';
-import { ExclusiveColumnInfo } from '~/classes/DbUtils';
+// types
+import type { SequelizeType } from '~/constants/sequelize';
+import type { ExclusiveColumnInfo } from '~/classes/DbUtils';
 
 /**
  * Utility class for parsing and handling default values from database columns.
