@@ -4,50 +4,75 @@
  * @see https://github.com/blacksmoke26
  */
 
-import { convertJsonToTs } from '~/libs/convertJsonToTs';
-import TableUtils from './TableUtils';
-
-interface JsonToTypescriptParams {
-  /** The SQL column type */
-  columnType: string;
-  /** The name of the table */
-  defaultValue: string;
-  /** The name of the column */
-  tableName: string;
-  /** The default value of the column */
-  columnName: string;
-}
-
+/**
+ * Utility class for type checking and conversion operations
+ */
 export default abstract class TypeUtils {
   /**
-   * Checks if a data type is a JSON type
-   * @param dataType - The data type to check
-   * @returns True if the type is JSON or JSONB
+   * Checks if a field type is a numeric type
+   * @param fieldType - The field type to check
+   * @returns True if the type is a numeric type
    */
-  public static isJsonize(dataType: string): boolean {
-    return ['json', 'jsonb'].includes(dataType.toLowerCase());
+  public static isNumber(fieldType: string): boolean {
+    return /^(smallint|mediumint|tinyint|int|bigint|float|money|smallmoney|double|decimal|numeric|real|oid)/i.test(
+      fieldType,
+    );
   }
 
   /**
-   * Checks if a data type is a JSON type
-   * @param dataType - The data type to check
-   * @returns True if the type is JSON or JSONB
+   * Checks if a field type is a boolean type
+   * @param fieldType - The field type to check
+   * @returns True if the type is a boolean type
    */
-  public static isDateTime(dataType: string): boolean {
-    return ['json', 'jsonb'].includes(dataType.toLowerCase());
+  public static isBoolean(fieldType: string): boolean {
+    return /^(boolean|bit)/i.test(fieldType);
   }
 
   /**
-   * Converts a JSON column to TypeScript types
-   * @param params - The detailed params
-   * @returns TypeScript type definition if column is JSON/JSONB, otherwise null
+   * Checks if a field type is a date/time type
+   * @param fieldType - The field type to check
+   * @returns True if the type is a date/time type
    */
-  public static jsonToTypescript(params: JsonToTypescriptParams): string | null {
-    const { columnType, tableName, columnName, defaultValue } = params;
+  public static isDate(fieldType: string): boolean {
+    return /^(datetime|timestamp)/i.test(fieldType);
+  }
 
-    return !this.isJsonize(columnType)
-      ? defaultValue
-      : 'export ' + convertJsonToTs(JSON.parse(defaultValue === 'null' ? '{}' : defaultValue), TableUtils.toJsonColumnTypeName(tableName, columnName));
+  /**
+   * Checks if a field type is a string type
+   * @param fieldType - The field type to check
+   * @returns True if the type is a string type
+   */
+  public static isString(fieldType: string): boolean {
+    return /^(char|nchar|string|varying|varchar|nvarchar|text|longtext|mediumtext|tinytext|ntext|uuid|uniqueidentifier|date|time|inet|cidr|macaddr)/i.test(
+      fieldType,
+    );
+  }
+
+  /**
+   * Checks if a field type is an array or range type
+   * @param fieldType - The field type to check
+   * @returns True if the type is an array or range type
+   */
+  public static isArray(fieldType: string): boolean {
+    return /(^array)|(range$)/i.test(fieldType);
+  }
+
+  /**
+   * Checks if a field type is an enum type
+   * @param fieldType - The field type to check
+   * @returns True if the type is an enum type
+   */
+  public static isEnum(fieldType: string): boolean {
+    return /^(enum)/i.test(fieldType);
+  }
+
+  /**
+   * Checks if a field type is a JSON type
+   * @param fieldType - The field type to check
+   * @returns True if the type is JSON or JSONB
+   */
+  public static isJSON(fieldType: string): boolean {
+    return /^(json|jsonb)/i.test(fieldType);
   }
 
   /**
@@ -55,16 +80,13 @@ export default abstract class TypeUtils {
    * @param typeDefinition - The PostgreSQL type definition string
    * @returns Object containing precision and scale, or null if not applicable
    */
-  public static getDecimalRange(typeDefinition: string): { precision: number; scale: number } | null {
-    const match = typeDefinition.match(/^numeric\((\d+),(\d+)\)$/i) || typeDefinition.match(/^decimal\((\d+),(\d+)\)$/i);
+  public static parseDecimalRange(
+    typeDefinition: string,
+  ): [number, number] | null {
+    const match =
+      typeDefinition.match(/^numeric\((\d+),\s*(\d+)\)$/i) ||
+      typeDefinition.match(/^decimal\((\d+),\s*(\d+)\)$/i);
 
-    if (!match) {
-      return null;
-    }
-
-    return {
-      precision: parseInt(match[1], 10),
-      scale: parseInt(match[2], 10),
-    };
+    return !match ? null : [parseInt(match[1], 10), parseInt(match[2], 10)];
   }
 }
