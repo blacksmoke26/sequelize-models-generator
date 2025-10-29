@@ -9,7 +9,6 @@ import 'dotenv/config';
 import figlet from 'figlet';
 import KnexClient from '../classes/KnexClient';
 import TableColumns from '../classes/TableColumns';
-import DatabaseUtils from '../classes/DatabaseUtils';
 import RandomHelper from '../helpers/RandomHelper';
 import DateTimeHelper from '../helpers/DateTimeHelper';
 import FileHelper from '../helpers/FileHelper';
@@ -21,6 +20,7 @@ import {
 } from '~/libs/sequelize-ui/schema/schema';
 import { type Association } from '~/libs/sequelize-ui/schema/association';
 import resolvedDataTypeOptions from '~/libs/sequelize-ui/resolved-dataType-options';
+import DbUtils from '~/classes/DbUtils';
 
 async function run() {
   console.log(await figlet.text('Sandbox', { font: 'Slant' }));
@@ -40,10 +40,8 @@ async function run() {
     models: [],
   };
 
-  const dbSchemas = await DatabaseUtils.getSchemas(knex);
-  const schemaTables = (
-    await DatabaseUtils.getTables(knex, [], dbSchemas[0])
-  ).map((x) => x.table_name);
+  const dbSchemas = await DbUtils.getSchemas(knex);
+  const schemaTables = await DbUtils.getTables(knex, dbSchemas[0]);
 
   for (const schemaTable of schemaTables) {
     tableIds[schemaTable] = RandomHelper.randomString();

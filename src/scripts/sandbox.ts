@@ -11,6 +11,7 @@ import figlet from 'figlet';
 // classes
 import KnexClient from '../classes/KnexClient';
 import TableColumns from '~/classes/TableColumns';
+import DbUtils from '~/classes/DbUtils';
 
 async function run() {
   console.log(await figlet.text('Sandbox', { font: 'Slant' }));
@@ -19,9 +20,15 @@ async function run() {
   // 1️⃣ Configure Knex
   const knex = KnexClient.create();
 
-  const result = await TableColumns.list(knex, 'users');
+  //const result = await TableColumns.list(knex, 'users');
 
-  console.log(result);
+  //console.log(await DbUtils.getTableElementTypes(knex, 'products'));
+  console.log(await TableColumns.list(knex, 'products'));
+  //console.log('isCompositeTypeColumn:', await DbUtils.getCompositeTypeData(knex, 'products', 'address_composite'));
+  //console.log(await DbUtils.getSchemas(knex));
+  //console.log(await DbUtils.getTableIndexes(knex, 'products'));
+  //console.log(await DbUtils.getTableConstraints(knex, 'products'));
+  //console.log(result);
 
   console.log(`\n\n--------------- END OF SCRIPT ----------------`);
   process.exit();

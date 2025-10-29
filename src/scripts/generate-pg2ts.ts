@@ -5,10 +5,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {createDir, DIST_DIR} from '~/constants/file-system';
 import {getJsType, pgSequelizeTypeMap} from '~/constants/pg';
-import DatabaseUtils from '~/classes/DatabaseUtils';
 import TypeUtils from '~/classes/TypeUtils';
 import TableUtils from '~/classes/TableUtils';
 import KnexClient from '~/classes/KnexClient';
+import DbUtils from '~/classes/DbUtils';
+import DefaultValueParser from '~/parsers/DefaultValueParser';
 
 // 1️⃣ Configure Knex
 const kexInstance = KnexClient.create();
@@ -57,31 +58,32 @@ ${attributes.join('\n')}
  */
 async function generateModels() {
   let datatypeInterfaces: string[] = [];
+  const schemaName = 'public';
 
 // 2️⃣ Get all tables in public schema
-  const tables = (await DatabaseUtils.getTables(kexInstance, ['table_schema'])).filter(x => x.table_name === 'users');
+  const tables = (await DbUtils.getTables(kexInstance, schemaName)).filter(x => x === 'users');
 
   // Ensure output directory exists
   const outDir = path.resolve(DIST_DIR, 'models-ts-definitons');
   createDir(outDir);
 
   // 3️⃣ Generate a model file per table
-  for (const {table_name, table_schema} of tables) {
+  for (const table_name of tables) {
     const tsNodeTypes: string[] = [];
-    const columns = await DatabaseUtils.getTableColumns(kexInstance, table_name, ['*']);
+    const columns = await DbUtils.getTableColumnsInfo(kexInstance, table_name);
 
     const modelName = TableUtils.table2ModelName(table_name);
     const attributes: string[] = [];
 
     for (const col of columns) {
       //const comment = await kexInstance.table(col.table_name).columnInfo();
-      const isJsonize = TypeUtils.isJsonize(col.data_type);
+      const isJsonize = TypeUtils.isJSON(col.data_type);
       const jsonizeInterface = Case.pascal(`${modelName}_${col.column_name}_data`);
 
       const tsType = pgSequelizeTypeMap[col.data_type] ?? 'DataTypes.STRING';
       const allowNull = col.is_nullable === 'YES';
 
-      const defaultValueString: string = DatabaseUtils.escapeDefaultValue(col.column_default);
+      const defaultValueString: string = DefaultValueParser.parseString(col.column_default);
 
       const defaultValue = defaultValueString.trim()
         ? `      defaultValue: ${defaultValueString},\n`
@@ -114,7 +116,7 @@ async function generateModels() {
       tsNodeTypes,
       attributes,
       table_name,
-      table_schema,
+      table_schema: schemaName,
     });
 
     const filePath = path.join(outDir, `${modelName}`);
@@ -128,16 +130,16 @@ async function generateModels() {
 import { Sequelize } from 'sequelize';
 ${tables
     .map(
-      ({table_name}) =>
-        `import { init${TableUtils.table2ModelName(table_name)} } from './${TableUtils.table2ModelName(table_name)}';`,
+      (n) =>
+        `import { init${TableUtils.table2ModelName(n)} } from './${TableUtils.table2ModelName(n)}';`,
     )
     .join('\n')}
 
 export function initAllModels(sequelize: Sequelize) {
 ${tables
     .map(
-      ({table_name}) =>
-        `  init${TableUtils.table2ModelName(table_name)}(sequelize);`,
+      (n) =>
+        `  init${TableUtils.table2ModelName(n)}(sequelize);`,
     )
     .join('\n')}
 }
