@@ -124,6 +124,8 @@ export interface ForeignKey {
   tableName: string;
   /** Name of the column that references another table */
   columnName: string;
+  /** Default value of the column */
+  defaultValue: string | null;
   /** Information about the referenced (target) table and column */
   referenced: {
     /** Schema name of the referenced table */

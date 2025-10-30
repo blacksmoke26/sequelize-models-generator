@@ -5,6 +5,8 @@ SELECT
   tc.table_schema AS table_schema,
   tc.TABLE_NAME AS TABLE_NAME,
   kcu.COLUMN_NAME AS COLUMN_NAME,
+  -- Default value of the foreign key column (newly added)
+  pg_get_expr(d.adbin, d.adrelid) AS column_default,
   -- Referenced table information
   ccu.table_schema AS referenced_schema,
   ccu.TABLE_NAME AS referenced_table,
@@ -28,52 +30,47 @@ FROM
   information_schema.table_constraints tc
     JOIN information_schema.key_column_usage kcu ON tc.CONSTRAINT_CATALOG = kcu.CONSTRAINT_CATALOG
     AND tc.CONSTRAINT_SCHEMA = kcu.CONSTRAINT_SCHEMA
-    AND tc.CONSTRAINT_NAME = kcu.
-      CONSTRAINT_NAME JOIN information_schema.referential_constraints rc ON tc.CONSTRAINT_CATALOG = rc.CONSTRAINT_CATALOG
+    AND tc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
+    JOIN information_schema.referential_constraints rc ON tc.CONSTRAINT_CATALOG = rc.CONSTRAINT_CATALOG
     AND tc.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA
-    AND tc.CONSTRAINT_NAME = rc.
-      CONSTRAINT_NAME JOIN information_schema.constraint_column_usage ccu ON rc.unique_constraint_catalog = ccu.CONSTRAINT_CATALOG
+    AND tc.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
+    JOIN information_schema.constraint_column_usage ccu ON rc.unique_constraint_catalog = ccu.CONSTRAINT_CATALOG
     AND rc.unique_constraint_schema = ccu.CONSTRAINT_SCHEMA
-    AND rc.unique_constraint_name = ccu.CONSTRAINT_NAME -- Join with pg_constraint for additional metadata
+    AND rc.unique_constraint_name = ccu.CONSTRAINT_NAME
+    -- Join with pg_constraint for additional metadata
     JOIN pg_constraint pgc ON pgc.conname = tc.CONSTRAINT_NAME
     AND pgc.connamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.CONSTRAINT_SCHEMA)
+    -- Join to get default value
+    JOIN pg_namespace n_src ON n_src.nspname = tc.table_schema
+    JOIN pg_class c_src ON c_src.relname = tc.TABLE_NAME AND c_src.relnamespace = n_src.OID
+    JOIN pg_attribute a_src ON a_src.attrelid = c_src.OID AND a_src.attname = kcu.COLUMN_NAME
+    LEFT JOIN pg_attrdef d ON d.adrelid = a_src.attrelid AND d.adnum = a_src.attnum
     -- Join for constraint comment
-    LEFT JOIN pg_description pgd ON pgd.objoid = pgc.OID -- Join for source column comment
+    LEFT JOIN pg_description pgd ON pgd.objoid = pgc.OID
+    -- Join for source column comment
     LEFT JOIN pg_description pgd_col_src ON pgd_col_src.objoid = (
-    SELECT
-      attrelid
-    FROM
-      pg_attribute
-    WHERE
-      attrelid = (SELECT OID FROM pg_class WHERE relname = tc.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.table_schema))
+    SELECT attrelid
+    FROM pg_attribute
+    WHERE attrelid = (SELECT OID FROM pg_class WHERE relname = tc.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.table_schema))
       AND attname = kcu.COLUMN_NAME
   )
     AND pgd_col_src.objsubid = (
-      SELECT
-        attnum
-      FROM
-        pg_attribute
-      WHERE
-        attrelid = (SELECT OID FROM pg_class WHERE relname = tc.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.table_schema))
+      SELECT attnum
+      FROM pg_attribute
+      WHERE attrelid = (SELECT OID FROM pg_class WHERE relname = tc.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.table_schema))
         AND attname = kcu.COLUMN_NAME
     )
     -- Join for referenced column comment
     LEFT JOIN pg_description pgd_col_tgt ON pgd_col_tgt.objoid = (
-    SELECT
-      attrelid
-    FROM
-      pg_attribute
-    WHERE
-      attrelid = (SELECT OID FROM pg_class WHERE relname = ccu.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = ccu.table_schema))
+    SELECT attrelid
+    FROM pg_attribute
+    WHERE attrelid = (SELECT OID FROM pg_class WHERE relname = ccu.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = ccu.table_schema))
       AND attname = ccu.COLUMN_NAME
   )
     AND pgd_col_tgt.objsubid = (
-      SELECT
-        attnum
-      FROM
-        pg_attribute
-      WHERE
-        attrelid = (SELECT OID FROM pg_class WHERE relname = ccu.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = ccu.table_schema))
+      SELECT attnum
+      FROM pg_attribute
+      WHERE attrelid = (SELECT OID FROM pg_class WHERE relname = ccu.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = ccu.table_schema))
         AND attname = ccu.COLUMN_NAME
     )
     -- Join for source table comment
@@ -84,6 +81,8 @@ FROM
     AND pgd_tbl_tgt.objsubid = 0
 WHERE
   tc.constraint_type = 'FOREIGN KEY'
+  AND a_src.attnum > 0
+  AND NOT a_src.attisdropped
 ORDER BY
   tc.table_schema,
   tc.TABLE_NAME,

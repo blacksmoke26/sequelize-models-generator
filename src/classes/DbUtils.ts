@@ -174,6 +174,7 @@ export default abstract class DbUtils {
           table_schema: string;
           table_name: string;
           column_name: string;
+          column_default: string | null;
           referenced_schema: string;
           referenced_table: string;
           referenced_column: string;
@@ -214,6 +215,7 @@ export default abstract class DbUtils {
               tableSchema: x.table_schema,
               tableName: x.table_name,
               columnName: x.column_name,
+              defaultValue: x.column_default,
               referenced: {
                 schema: x.referenced_schema,
                 table: x.referenced_table,
