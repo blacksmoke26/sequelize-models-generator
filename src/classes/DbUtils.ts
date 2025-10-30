@@ -478,6 +478,7 @@ export default abstract class DbUtils {
           index_type: string;
           constraint_type: string;
           columns: string;
+          index_comment: string| null;
         }[];
       }>(query);
 
@@ -504,6 +505,7 @@ export default abstract class DbUtils {
               type: x.index_type as TableIndex['type'],
               constraint: x.constraint_type as TableIndex['constraint'],
               columns: x.columns.split(','),
+              comment: x.index_comment,
             }) satisfies TableIndex,
         );
     } catch {
