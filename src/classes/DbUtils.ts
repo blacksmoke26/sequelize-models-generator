@@ -137,6 +137,18 @@ export interface TableIndexInfo {
 }
 
 /**
+ * Interface representing index information for a table.
+ */
+export interface TableIndex {
+  schema: string;
+  table: string;
+  name: string;
+  type: 'btree' | 'gin' | 'hash' | 'gist' | 'spgist' | 'brin' | 'bloom';
+  constraint: 'PRIMARY KEY' | 'UNIQUE' | 'INDEX';
+  columns: string[];
+}
+
+/**
  * Interface representing foreign key information.
  */
 export interface TableForeignKey {
@@ -235,23 +247,31 @@ export interface DomainTypeData {
  */
 export default abstract class DbUtils {
   /**
-   * Retrieves a list of schema names from the database.
+   * Retrieves a list of system schema names from the database.
    * @param knex - Knex instance for database connection
-   * @returns Promise resolving to array of schema names
+   * @returns Promise resolving to array of system schema names
    */
-  public static async getSchemas(knex: Knex): Promise<Readonly<string[]>> {
+  public static async getSystemSchemas(knex: Knex): Promise<string[]> {
     const predefined: Awaited<{ nspname: string }[]> = await knex
       .select('nspname')
       .from('pg_namespace')
       .whereRaw('nspowner = CURRENT_USER::REGROLE');
 
+    return predefined.map((x) => x.nspname);
+  }
+
+  /**
+   * Retrieves a list of schema names (except system schemas) from the database.
+   * @param knex - Knex instance for database connection
+   * @returns Promise resolving to array of schema names
+   */
+  public static async getSchemas(knex: Knex): Promise<Readonly<string[]>> {
+    const systemSchemas = await this.getSystemSchemas(knex);
+
     const list: Awaited<{ schema_name: string }[]> = await knex
       .select('schema_name')
       .from('information_schema.schemata')
-      .whereNotIn(
-        'schema_name',
-        predefined.map((x) => x.nspname),
-      )
+      .whereNotIn('schema_name', systemSchemas)
       .orderBy('schema_name');
 
     return list.map((x) => x.schema_name);
@@ -588,6 +608,61 @@ export default abstract class DbUtils {
       }
 
       return relations;
+    } catch {
+      return [];
+    }
+  }
+  /**
+   * Retrieves index information for database tables.
+   * @param knex - Knex instance for database connection
+   * @param tableName - Optional table name to filter indexes (defaults to null)
+   * @param schemaName - Optional schema name to filter indexes (defaults to null)
+   * @returns Promise resolving to array of table index information
+   */
+  public static async getIndexes(
+    knex: Knex,
+    tableName: string = null,
+    schemaName: string | null = null,
+  ): Promise<TableIndex[]> {
+    const query = FileHelper.readSqlFile('database-indexes.sql');
+
+    try {
+      const { rows = [] } = await knex.raw<{
+        rows: {
+          schema_name: string;
+          table_name: string;
+          index_name: string;
+          index_type: string;
+          constraint_type: string;
+          columns: string;
+        }[];
+      }>(query);
+
+      return rows
+        .filter((x) => {
+          let isSchema: boolean = true;
+          let isTable: boolean = true;
+
+          if (schemaName) {
+            isSchema = x.schema_name === schemaName;
+          }
+          if (tableName) {
+            isTable = x.table_name === tableName;
+          }
+
+          return isSchema && isTable;
+        })
+        .map(
+          (x) =>
+            ({
+              schema: x.schema_name,
+              table: x.table_name,
+              name: x.index_name,
+              type: x.index_type as TableIndex['type'],
+              constraint: x.constraint_type as TableIndex['constraint'],
+              columns: x.columns.split(','),
+            }) satisfies TableIndex,
+        );
     } catch {
       return [];
     }
