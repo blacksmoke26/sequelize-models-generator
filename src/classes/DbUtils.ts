@@ -579,9 +579,9 @@ export default abstract class DbUtils {
             column: row.source_column,
           },
           target: {
-            schema: row.source_schema,
-            table: row.source_table,
-            column: row.source_column,
+            schema: row.target_schema,
+            table: row.target_table,
+            column: row.target_column,
           },
           junction: { schema: row.junction_schema, table: row.junction_table },
         });
