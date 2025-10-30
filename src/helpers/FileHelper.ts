@@ -29,6 +29,21 @@ export default abstract class FileHelper {
   }
 
   /**
+   * Saves a string to a file at the given path.
+   * @param filePath The path where the file will be saved.
+   * @param text The string to write.
+   */
+  public static saveTextToFile(filePath: string, text: string): void {
+    try {
+      fs.rmSync(filePath);
+    } catch {
+      // do nothing
+    }
+
+    fs.writeFileSync(filePath, text, 'utf8');
+  }
+
+  /**
    * Reads the contents of a file at the given path.
    * @param filePath The path of the file to read.
    * @returns The contents of the file as a string.
