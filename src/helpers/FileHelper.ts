@@ -1,3 +1,9 @@
+/**
+ * @author Junaid Atari <mj.atari@gmail.com>
+ * @copyright 2025 Junaid Atari
+ * @see https://github.com/blacksmoke26
+ */
+
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -14,9 +20,9 @@ export default abstract class FileHelper {
    */
   public static saveJsonToFile(filePath: string, jsonString: string): void {
     try {
-    	fs.rmSync(filePath)
+      fs.rmSync(filePath);
     } catch {
-    	// do nothing
+      // do nothing
     }
 
     fs.writeFileSync(filePath, jsonString, 'utf8');
@@ -29,6 +35,23 @@ export default abstract class FileHelper {
    */
   public static readFile(filePath: string): string {
     return fs.readFileSync(filePath, 'utf8');
+  }
+
+  /**
+   * Reads a SQL file from the sqls directory.
+   * @param filename The name of the SQL file to read.
+   * @returns The contents of the SQL file as a string.
+   * @example
+   * ```typescript
+   * const sqlContent = FileHelper.readSqlFile('query.sql');
+   * console.log(sqlContent);
+   * ```
+   */
+  public static readSqlFile(filename: string): string {
+    return fs.readFileSync(
+      path.join(__dirname, '..', 'sqls', filename),
+      'utf8',
+    );
   }
 
   /**
