@@ -7,6 +7,19 @@
 // types
 import type { Knex } from 'knex';
 import type { TableColumnInfo } from '~/typings/knex';
+import type {
+  TableIndex,
+  ForeignKey,
+  TableGeoType,
+  TableElementType,
+  TableColumnType,
+  TableForeignKey,
+  TableIndexInfo,
+  CompositeTypeData,
+  DomainTypeData,
+  ExclusiveColumnInfo,
+  Relationship,
+} from '~/typings/utils';
 
 // helpers
 import FileHelper from '~/helpers/FileHelper';
@@ -35,211 +48,6 @@ export enum RelationshipType {
   HasMany = 'HasMany',
   /** ManyToMany relationship (many-to-many) */
   ManyToMany = 'ManyToMany',
-}
-
-/**
- * Interface representing a relationship between two database tables.
- */
-export interface Relationship {
-  /** Type of relationship (e.g., BelongsTo, HasOne) */
-  type: RelationshipType;
-  /** Source table information (the "many" side in most cases) */
-  source: {
-    /** Database schema name */
-    schema: string;
-    /** Table name */
-    table: string;
-    /** Column name that participates in the relationship */
-    column: string;
-  };
-  /** Target table information (the "one" side in most cases) */
-  target: {
-    /** Database schema name */
-    schema: string;
-    /** Table name */
-    table: string;
-    /** Column name that participates in the relationship */
-    column: string;
-  };
-  /** Junction table information for ManyToMany relationships */
-  junction: {
-    /** Database schema name of the junction table (null for non-ManyToMany) */
-    schema: string | null;
-    /** Junction table name (null for non-ManyToMany) */
-    table: string | null;
-  };
-}
-
-/**
- * Interface representing detailed information about a table column.
- */
-export interface TableColumnType {
-  /** Constraint type (e.g., PRIMARY KEY) */
-  readonly constraint: string | null;
-  /** Column name */
-  readonly name: string | null;
-  /** Default value for the column */
-  readonly defaultValue: string | null;
-  /** Whether the column can be null */
-  readonly nullable: boolean;
-  /** Data type of the column */
-  readonly type: string;
-  /** Special attributes (e.g., enum values) */
-  readonly special: string | null;
-  /** Column comment */
-  readonly comment: string | null;
-}
-
-/**
- * Interface representing element types of a table column.
- */
-export interface TableElementType {
-  /** Column name */
-  readonly columnName: string;
-  /** Data type in lowercase */
-  readonly dataType: string;
-  /** User-defined type name */
-  readonly udtName: string;
-  /** Element type for array columns */
-  readonly elementType: string | null;
-  /** Whether the column is an enum type */
-  readonly isEnum: boolean;
-  /** Enum values if applicable */
-  readonly enumData: string[] | null;
-  /** Whether the column is a domain type */
-  readonly isDomain: boolean;
-  /** Domain information if applicable */
-  readonly domainData: DomainTypeData | null;
-  /** Whether the column is a composite type */
-  readonly isComposite: boolean;
-  /** Composite information if applicable */
-  readonly compositeData: CompositeTypeData | null;
-}
-
-/**
- * Interface representing index information for a table.
- */
-export interface TableIndexInfo {
-  /** Index name */
-  readonly name: string;
-  /** Whether this is a primary key index */
-  readonly primary: boolean;
-  /** Whether this is a unique index */
-  readonly unique: boolean;
-  /** Index key string */
-  readonly indKey: string;
-  /** Array of column indexes */
-  readonly columnIndexes: number[];
-  /** Array of column names */
-  readonly columnNames: string;
-  /** Index definition */
-  readonly definition: string;
-}
-
-/**
- * Interface representing index information for a table.
- */
-export interface TableIndex {
-  schema: string;
-  table: string;
-  name: string;
-  type: 'btree' | 'gin' | 'hash' | 'gist' | 'spgist' | 'brin' | 'bloom';
-  constraint: 'PRIMARY KEY' | 'UNIQUE' | 'INDEX';
-  columns: string[];
-}
-
-/**
- * Interface representing foreign key information.
- */
-export interface TableForeignKey {
-  /** Name of the constraint */
-  readonly constraintName: string | null;
-  /** Type of constraint */
-  readonly constraintType: ConstraintType;
-  /** Source schema name */
-  readonly sourceSchema: string | null;
-  /** Source table name */
-  readonly sourceTable: string | null;
-  /** Source column name */
-  readonly sourceColumn: string | null;
-  /** Target schema name */
-  readonly targetSchema: string | null;
-  /** Target table name */
-  readonly targetTable: string | null;
-  /** Target column name */
-  readonly targetColumn: string | null;
-  /** Extra column information */
-  readonly extra: string | null;
-  /** Identity generation */
-  readonly generation: string | null;
-}
-
-/**
- * Interface representing geographic/geometry column types.
- */
-export interface TableGeoType {
-  /** Column name */
-  readonly columnName: string;
-  /** User-defined type name */
-  readonly udtName: string;
-  /** SRID value */
-  readonly dataType: string;
-  /** Coordinate dimension */
-  readonly elementType: string;
-}
-
-/**
- * Interface representing exclusive table information, including column details, element types, and additional info.
- */
-export interface ExclusiveColumnInfo {
-  /**
-   * Name of the table.
-   */
-  name: string;
-  /**
-   * Detailed information about the column.
-   */
-  column: TableColumnType;
-  /**
-   * Element type information for the column.
-   */
-  element: TableElementType;
-  /**
-   * Additional information about the column, such as constraints or comments.
-   */
-  info: TableColumnInfo;
-}
-/**
- * Interface representing composite type data for a table column.
- */
-export interface CompositeTypeData {
-  /** Name of the composite type */
-  typeName: string;
-  /** Array of attribute names in the composite type */
-  attributeNames: string;
-  /** Array of attribute types in the composite type */
-  attributeTypes: string;
-}
-
-/**
- * Interface representing domain type data for a table column.
- */
-export interface DomainTypeData {
-  /** Name of the domain type */
-  domainName: string;
-  /** Base type of the domain */
-  baseType: string;
-  /** Array of constraints applied to the domain */
-  constraints: Array<{
-    /** Name of the constraint */
-    name: string;
-    /** Check expression for the constraint */
-    checkExpression?: string;
-    /** Whether the constraint enforces not null */
-    notNull?: boolean;
-    /** Default value for the constraint */
-    default?: string;
-  }>;
 }
 
 /**
@@ -612,6 +420,94 @@ export default abstract class DbUtils {
       return [];
     }
   }
+
+  /**
+   * Retrieves foreign key information for database tables.
+   * @param knex - Knex instance for database connection
+   * @param tableName - Optional table name to filter foreign keys (defaults to null)
+   * @param schemaName - Optional schema name to filter foreign keys (defaults to null)
+   * @returns Promise resolving to array of foreign key information
+   */
+  public static async getForeignKeys(
+    knex: Knex,
+    tableName: string = null,
+    schemaName: string | null = null,
+  ): Promise<ForeignKey[]> {
+    const query = FileHelper.readSqlFile('database-foreign-keys.sql');
+
+    try {
+      const { rows = [] } = await knex.raw<{
+        rows: {
+          fk_schema: string;
+          fk_constraint_name: string;
+          table_schema: string;
+          table_name: string;
+          column_name: string;
+          referenced_schema: string;
+          referenced_table: string;
+          referenced_column: string;
+          constraint_type: 'FOREIGN KEY';
+          update_rule: ForeignKey['rule']['update'];
+          delete_rule: ForeignKey['rule']['delete'];
+          match_option: ForeignKey['matchOption'];
+          is_deferrable: boolean;
+          is_deferred: boolean;
+          constraint_comment: string | null;
+          source_column_comment: string | null;
+          referenced_column_comment: string | null;
+          source_table_comment: string | null;
+          referenced_table_comment: string | null;
+        }[];
+      }>(query);
+
+      return rows
+        .filter((x) => {
+          let isSchema: boolean = true;
+          let isTable: boolean = true;
+
+          if (schemaName) {
+            isSchema = x.table_schema === schemaName;
+          }
+          if (tableName) {
+            isTable = x.table_name === tableName;
+          }
+
+          return isSchema && isTable;
+        })
+        .map(
+          (x) =>
+            ({
+              schema: x.fk_schema,
+              constraintName: x.fk_constraint_name,
+              comment: x.constraint_comment,
+              tableSchema: x.table_schema,
+              tableName: x.table_name,
+              columnName: x.column_name,
+              referenced: {
+                schema: x.referenced_schema,
+                table: x.referenced_table,
+                column: x.referenced_column,
+                tableComment: x.referenced_table_comment,
+                columnComment: x.referenced_column_comment,
+              },
+              source: {
+                tableComment: x.source_table_comment,
+                columnComment: x.source_column_comment,
+              },
+              rule: {
+                update: x.update_rule,
+                delete: x.delete_rule,
+              },
+              matchOption: x.match_option,
+              isDeferrable: x.is_deferrable,
+              isDeferred: x.is_deferred,
+            }) satisfies ForeignKey,
+        );
+    } catch {
+      return [];
+    }
+  }
+
   /**
    * Retrieves index information for database tables.
    * @param knex - Knex instance for database connection
