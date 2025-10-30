@@ -114,12 +114,12 @@ export default abstract class TableColumns {
           sequelizeType,
           sequelizeTypeParams,
         }),
-        tsInterface: TypeScriptTypeParser.jsonToInterface({
+        tsInterface: defaultValue ? TypeScriptTypeParser.jsonToInterface({
           columnType: columnType,
           columnName: name,
           tableName,
           defaultValue,
-        }),
+        }) : null,
         flags: {
           nullable: column.nullable,
           primary: ExclusiveTableInfoUtils.isPrimaryKey(columnInfo),
