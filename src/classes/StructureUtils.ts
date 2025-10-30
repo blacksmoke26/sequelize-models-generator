@@ -19,6 +19,8 @@ export interface RelationInfo {
   toMany: boolean;
   /** Whether the parent record is mandatory */
   mandatoryParent: boolean;
+  /** The source table's full name (schema.table) */
+  sourceTable: string;
   /** The target table's full name (schema.table) */
   targetTable: string;
   /** The name of the foreign key constraint */
@@ -89,7 +91,8 @@ export default abstract class StructureUtils {
             toMany,
             name: foreignKey.name,
             mandatoryParent: foreignKey.mandatoryParent,
-            targetTable: foreignKey.table.fullName,
+            sourceTable: relation.sourceTable.fullName,
+            targetTable: relation.targetTable.fullName,
             column: columns[0],
             comment: foreignKey?.comment ?? null,
             onUpdate: foreignKey.onUpdate,
