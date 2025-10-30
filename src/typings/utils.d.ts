@@ -104,6 +104,8 @@ export interface TableIndex {
   constraint: 'PRIMARY KEY' | 'UNIQUE' | 'INDEX';
   /** Array of column names included in the index */
   columns: string[];
+  /** Index comment if any */
+  comment: string | null;
 }
 
 /**
