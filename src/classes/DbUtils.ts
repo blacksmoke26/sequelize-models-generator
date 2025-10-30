@@ -109,71 +109,187 @@ export default abstract class DbUtils {
   }
 
   /**
-   * Retrieves composite type information for a table column.
+   * Retrieves relationship information between database tables.
    * @param knex - Knex instance for database connection
-   * @param tableName - Name of the table
-   * @param columnName - Name of the column
-   * @param schemaName - Schema name (defaults to 'public')
-   * @returns Promise resolving to composite type information or null if not found
+   * @returns Promise resolving to an array of relationship information
    */
-  public static async getCompositeTypeData(
-    knex: Knex,
-    tableName: string,
-    columnName: string,
-    schemaName: string = 'public',
-  ): Promise<Readonly<CompositeTypeData | null>> {
-    const query = FileHelper.readSqlFile('composite-type-data.sql');
+  public static async getRelationships(knex: Knex): Promise<Relationship[]> {
+    const query = FileHelper.readSqlFile('database-relationships.sql');
 
-    const { rows = [] } = (await knex.raw(query, [
-      tableName,
-      columnName,
-      schemaName,
-    ])) as Awaited<{
-      rows: CompositeTypeData[];
-    }>;
+    const relations: Relationship[] = [];
 
-    return rows?.[0] ?? null;
+    try {
+      const { rows = [] } = await knex.raw<{
+        rows: {
+          source_schema: string;
+          source_table: string;
+          source_column: string;
+          target_schema: string;
+          target_table: string;
+          target_column: string;
+          relationship_type: string;
+          junction_schema: string | null;
+          junction_table: string | null;
+        }[];
+      }>(query);
+
+      for (const row of rows) {
+        relations.push({
+          type: RelationshipType[row.relationship_type],
+          source: {
+            schema: row.source_schema,
+            table: row.source_table,
+            column: row.source_column,
+          },
+          target: {
+            schema: row.target_schema,
+            table: row.target_table,
+            column: row.target_column,
+          },
+          junction: { schema: row.junction_schema, table: row.junction_table },
+        });
+      }
+
+      return relations;
+    } catch {
+      return [];
+    }
   }
 
   /**
-   * Retrieves domain type information for a table column.
+   * Retrieves foreign key information for database tables.
    * @param knex - Knex instance for database connection
-   * @param tableName - Name of the table
-   * @param columnName - Name of the column
-   * @param schemaName - Schema name (defaults to 'public')
-   * @returns Promise resolving to domain type information or null if not found
+   * @param tableName - Optional table name to filter foreign keys (defaults to null)
+   * @param schemaName - Optional schema name to filter foreign keys (defaults to null)
+   * @returns Promise resolving to array of foreign key information
    */
-  public static async getDomainTypeData(
-    knex: Knex,
-    tableName: string,
-    columnName: string,
-    schemaName: string = 'public',
-  ): Promise<Readonly<DomainTypeData | null>> {
-    const query = FileHelper.readSqlFile('domain-type-data.sql');
+  public static async getForeignKeys(knex: Knex, tableName: string = null, schemaName: string | null = null): Promise<ForeignKey[]> {
+    const query = FileHelper.readSqlFile('database-foreign-keys.sql');
 
     try {
-      const { rows = [] } = await knex.raw(query, [
-        tableName,
-        columnName,
-        schemaName,
-      ]);
+      const { rows = [] } = await knex.raw<{
+        rows: {
+          fk_schema: string;
+          fk_constraint_name: string;
+          table_schema: string;
+          table_name: string;
+          column_name: string;
+          referenced_schema: string;
+          referenced_table: string;
+          referenced_column: string;
+          constraint_type: 'FOREIGN KEY';
+          update_rule: ForeignKey['rule']['update'];
+          delete_rule: ForeignKey['rule']['delete'];
+          match_option: ForeignKey['matchOption'];
+          is_deferrable: boolean;
+          is_deferred: boolean;
+          constraint_comment: string | null;
+          source_column_comment: string | null;
+          referenced_column_comment: string | null;
+          source_table_comment: string | null;
+          referenced_table_comment: string | null;
+        }[];
+      }>(query);
 
-      if (!rows.length) {
-        return null;
-      }
+      return rows
+        .filter((x) => {
+          let isSchema: boolean = true;
+          let isTable: boolean = true;
 
-      return {
-        domainName: rows[0].domain_name,
-        baseType: rows[0].base_type,
-        constraints: rows.map((row: any) => ({
-          name: row.constraint_name,
-          checkExpression: row.check_expression || undefined,
-          notNull: row.constraint_type === 'n',
-          default: row.default_value || undefined,
-        })),
-      };
+          if (schemaName) {
+            isSchema = x.table_schema === schemaName;
+          }
+          if (tableName) {
+            isTable = x.table_name === tableName;
+          }
+
+          return isSchema && isTable;
+        })
+        .map(
+          (x) =>
+            ({
+              schema: x.fk_schema,
+              constraintName: x.fk_constraint_name,
+              comment: x.constraint_comment,
+              tableSchema: x.table_schema,
+              tableName: x.table_name,
+              columnName: x.column_name,
+              referenced: {
+                schema: x.referenced_schema,
+                table: x.referenced_table,
+                column: x.referenced_column,
+                tableComment: x.referenced_table_comment,
+                columnComment: x.referenced_column_comment,
+              },
+              source: {
+                tableComment: x.source_table_comment,
+                columnComment: x.source_column_comment,
+              },
+              rule: {
+                update: x.update_rule,
+                delete: x.delete_rule,
+              },
+              matchOption: x.match_option,
+              isDeferrable: x.is_deferrable,
+              isDeferred: x.is_deferred,
+            }) satisfies ForeignKey,
+        );
     } catch {
-      return null;
+      return [];
+    }
+  }
+
+  /**
+   * Retrieves index information for database tables.
+   * @param knex - Knex instance for database connection
+   * @param tableName - Optional table name to filter indexes (defaults to null)
+   * @param schemaName - Optional schema name to filter indexes (defaults to null)
+   * @returns Promise resolving to array of table index information
+   */
+  public static async getIndexes(knex: Knex, tableName: string = null, schemaName: string | null = null): Promise<TableIndex[]> {
+    const query = FileHelper.readSqlFile('database-indexes.sql');
+
+    try {
+      const { rows = [] } = await knex.raw<{
+        rows: {
+          schema_name: string;
+          table_name: string;
+          index_name: string;
+          index_type: string;
+          constraint_type: string;
+          columns: string;
+          index_comment: string | null;
+        }[];
+      }>(query);
+
+      return rows
+        .filter((x) => {
+          let isSchema: boolean = true;
+          let isTable: boolean = true;
+
+          if (schemaName) {
+            isSchema = x.schema_name === schemaName;
+          }
+          if (tableName) {
+            isTable = x.table_name === tableName;
+          }
+
+          return isSchema && isTable;
+        })
+        .map(
+          (x) =>
+            ({
+              schema: x.schema_name,
+              table: x.table_name,
+              name: x.index_name,
+              type: x.index_type as TableIndex['type'],
+              constraint: x.constraint_type as TableIndex['constraint'],
+              columns: x.columns.split(','),
+              comment: x.index_comment,
+            }) satisfies TableIndex,
+        );
+    } catch {
+      return [];
     }
   }
 
@@ -301,6 +417,75 @@ export default abstract class DbUtils {
   }
 
   /**
+   * Retrieves composite type information for a table column.
+   * @param knex - Knex instance for database connection
+   * @param tableName - Name of the table
+   * @param columnName - Name of the column
+   * @param schemaName - Schema name (defaults to 'public')
+   * @returns Promise resolving to composite type information or null if not found
+   */
+  public static async getCompositeTypeData(
+    knex: Knex,
+    tableName: string,
+    columnName: string,
+    schemaName: string = 'public',
+  ): Promise<Readonly<CompositeTypeData | null>> {
+    const query = FileHelper.readSqlFile('composite-type-data.sql');
+
+    const { rows = [] } = (await knex.raw(query, [
+      tableName,
+      columnName,
+      schemaName,
+    ])) as Awaited<{
+      rows: CompositeTypeData[];
+    }>;
+
+    return rows?.[0] ?? null;
+  }
+
+  /**
+   * Retrieves domain type information for a table column.
+   * @param knex - Knex instance for database connection
+   * @param tableName - Name of the table
+   * @param columnName - Name of the column
+   * @param schemaName - Schema name (defaults to 'public')
+   * @returns Promise resolving to domain type information or null if not found
+   */
+  public static async getDomainTypeData(
+    knex: Knex,
+    tableName: string,
+    columnName: string,
+    schemaName: string = 'public',
+  ): Promise<Readonly<DomainTypeData | null>> {
+    const query = FileHelper.readSqlFile('domain-type-data.sql');
+
+    try {
+      const { rows = [] } = await knex.raw(query, [
+        tableName,
+        columnName,
+        schemaName,
+      ]);
+
+      if (!rows.length) {
+        return null;
+      }
+
+      return {
+        domainName: rows[0].domain_name,
+        baseType: rows[0].base_type,
+        constraints: rows.map((row: any) => ({
+          name: row.constraint_name,
+          checkExpression: row.check_expression || undefined,
+          notNull: row.constraint_type === 'n',
+          default: row.default_value || undefined,
+        })),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Counts the number of triggers on a specified table.
    * @param knex - Knex instance for database connection
    * @param tableName - Name of the table to query
@@ -318,199 +503,6 @@ export default abstract class DbUtils {
     }>(query, [tableName, schemaName]);
 
     return Number(rows?.[0]?.trigger_count ?? 0);
-  }
-
-  /**
-   * Retrieves relationship information between database tables.
-   * @param knex - Knex instance for database connection
-   * @returns Promise resolving to an array of relationship information
-   */
-  public static async getRelationships(knex: Knex): Promise<Relationship[]> {
-    const query = FileHelper.readSqlFile('database-relationships.sql');
-
-    const relations: Relationship[] = [];
-
-    try {
-      const { rows = [] } = await knex.raw<{
-        rows: {
-          source_schema: string;
-          source_table: string;
-          source_column: string;
-          target_schema: string;
-          target_table: string;
-          target_column: string;
-          relationship_type: string;
-          junction_schema: string | null;
-          junction_table: string | null;
-        }[];
-      }>(query);
-
-      for (const row of rows) {
-        relations.push({
-          type: RelationshipType[row.relationship_type],
-          source: {
-            schema: row.source_schema,
-            table: row.source_table,
-            column: row.source_column,
-          },
-          target: {
-            schema: row.target_schema,
-            table: row.target_table,
-            column: row.target_column,
-          },
-          junction: { schema: row.junction_schema, table: row.junction_table },
-        });
-      }
-
-      return relations;
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * Retrieves foreign key information for database tables.
-   * @param knex - Knex instance for database connection
-   * @param tableName - Optional table name to filter foreign keys (defaults to null)
-   * @param schemaName - Optional schema name to filter foreign keys (defaults to null)
-   * @returns Promise resolving to array of foreign key information
-   */
-  public static async getForeignKeys(
-    knex: Knex,
-    tableName: string = null,
-    schemaName: string | null = null,
-  ): Promise<ForeignKey[]> {
-    const query = FileHelper.readSqlFile('database-foreign-keys.sql');
-
-    try {
-      const { rows = [] } = await knex.raw<{
-        rows: {
-          fk_schema: string;
-          fk_constraint_name: string;
-          table_schema: string;
-          table_name: string;
-          column_name: string;
-          referenced_schema: string;
-          referenced_table: string;
-          referenced_column: string;
-          constraint_type: 'FOREIGN KEY';
-          update_rule: ForeignKey['rule']['update'];
-          delete_rule: ForeignKey['rule']['delete'];
-          match_option: ForeignKey['matchOption'];
-          is_deferrable: boolean;
-          is_deferred: boolean;
-          constraint_comment: string | null;
-          source_column_comment: string | null;
-          referenced_column_comment: string | null;
-          source_table_comment: string | null;
-          referenced_table_comment: string | null;
-        }[];
-      }>(query);
-
-      return rows
-        .filter((x) => {
-          let isSchema: boolean = true;
-          let isTable: boolean = true;
-
-          if (schemaName) {
-            isSchema = x.table_schema === schemaName;
-          }
-          if (tableName) {
-            isTable = x.table_name === tableName;
-          }
-
-          return isSchema && isTable;
-        })
-        .map(
-          (x) =>
-            ({
-              schema: x.fk_schema,
-              constraintName: x.fk_constraint_name,
-              comment: x.constraint_comment,
-              tableSchema: x.table_schema,
-              tableName: x.table_name,
-              columnName: x.column_name,
-              referenced: {
-                schema: x.referenced_schema,
-                table: x.referenced_table,
-                column: x.referenced_column,
-                tableComment: x.referenced_table_comment,
-                columnComment: x.referenced_column_comment,
-              },
-              source: {
-                tableComment: x.source_table_comment,
-                columnComment: x.source_column_comment,
-              },
-              rule: {
-                update: x.update_rule,
-                delete: x.delete_rule,
-              },
-              matchOption: x.match_option,
-              isDeferrable: x.is_deferrable,
-              isDeferred: x.is_deferred,
-            }) satisfies ForeignKey,
-        );
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * Retrieves index information for database tables.
-   * @param knex - Knex instance for database connection
-   * @param tableName - Optional table name to filter indexes (defaults to null)
-   * @param schemaName - Optional schema name to filter indexes (defaults to null)
-   * @returns Promise resolving to array of table index information
-   */
-  public static async getIndexes(
-    knex: Knex,
-    tableName: string = null,
-    schemaName: string | null = null,
-  ): Promise<TableIndex[]> {
-    const query = FileHelper.readSqlFile('database-indexes.sql');
-
-    try {
-      const { rows = [] } = await knex.raw<{
-        rows: {
-          schema_name: string;
-          table_name: string;
-          index_name: string;
-          index_type: string;
-          constraint_type: string;
-          columns: string;
-          index_comment: string| null;
-        }[];
-      }>(query);
-
-      return rows
-        .filter((x) => {
-          let isSchema: boolean = true;
-          let isTable: boolean = true;
-
-          if (schemaName) {
-            isSchema = x.schema_name === schemaName;
-          }
-          if (tableName) {
-            isTable = x.table_name === tableName;
-          }
-
-          return isSchema && isTable;
-        })
-        .map(
-          (x) =>
-            ({
-              schema: x.schema_name,
-              table: x.table_name,
-              name: x.index_name,
-              type: x.index_type as TableIndex['type'],
-              constraint: x.constraint_type as TableIndex['constraint'],
-              columns: x.columns.split(','),
-              comment: x.index_comment,
-            }) satisfies TableIndex,
-        );
-    } catch {
-      return [];
-    }
   }
 
   /**
