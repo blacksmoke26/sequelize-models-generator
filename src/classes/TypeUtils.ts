@@ -76,6 +76,15 @@ export default abstract class TypeUtils {
   }
 
   /**
+   * Checks if a field type is a RANGE type
+   * @param fieldType - The field type to check
+   * @returns True if the type is RANGE
+   */
+  public static isRange(fieldType: string): boolean {
+    return fieldType.toLowerCase().endsWith('range');
+  }
+
+  /**
    * Retrieves the precision and scale range for PostgreSQL decimal/numeric types
    * @param typeDefinition - The PostgreSQL type definition string
    * @returns Object containing precision and scale, or null if not applicable
