@@ -13,8 +13,6 @@ import type {
   TableGeoType,
   TableElementType,
   TableColumnType,
-  TableForeignKey,
-  TableIndexInfo,
   CompositeTypeData,
   DomainTypeData,
   ExclusiveColumnInfo,
@@ -303,27 +301,6 @@ export default abstract class DbUtils {
   }
 
   /**
-   * Retrieves index information for a specified table.
-   * @param knex - Knex instance for database connection
-   * @param tableName - Name of the table to query
-   * @param schemaName - Schema name (defaults to 'public')
-   * @returns Promise resolving to array of table index information
-   */
-  public static async getTableIndexes(
-    knex: Knex,
-    tableName: string,
-    schemaName: string = 'public',
-  ): Promise<Readonly<TableIndexInfo[]>> {
-    const query = FileHelper.readSqlFile('table-indexes.sql');
-
-    const { rows = [] } = await knex.raw<{
-      rows: TableIndexInfo[];
-    }>(query, [tableName, schemaName]);
-
-    return rows;
-  }
-
-  /**
    * Counts the number of triggers on a specified table.
    * @param knex - Knex instance for database connection
    * @param tableName - Name of the table to query
@@ -341,36 +318,6 @@ export default abstract class DbUtils {
     }>(query, [tableName, schemaName]);
 
     return Number(rows?.[0]?.trigger_count ?? 0);
-  }
-
-  /**
-   * Retrieves constraints information for a specified table.
-   * @param knex - Knex instance for database connection
-   * @param tableName - Name of the table to query
-   * @param [constraintType] - Type of constraint to filter (defaults to null)
-   * @param schemaName - Schema name (defaults to 'public')
-   * @returns Promise resolving to array of foreign key information
-   */
-  public static async getTableConstraints(
-    knex: Knex,
-    tableName: string,
-    constraintType: ConstraintType | null = null,
-    schemaName: string = 'public',
-  ): Promise<Readonly<TableForeignKey[]>> {
-    let query = FileHelper.readSqlFile('table-constraints.sql');
-
-    const params = [tableName, schemaName];
-
-    if (constraintType !== null) {
-      query += 'AND tc.constraint_type = ?';
-      params.push(constraintType);
-    }
-
-    const { rows = [] } = await knex.raw<{
-      rows: TableForeignKey[];
-    }>(query, params);
-
-    return rows;
   }
 
   /**

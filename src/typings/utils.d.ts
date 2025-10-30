@@ -89,26 +89,6 @@ export interface TableElementType {
 }
 
 /**
- * Interface representing index information for a table.
- */
-export interface TableIndexInfo {
-  /** Index name */
-  readonly name: string;
-  /** Whether this is a primary key index */
-  readonly primary: boolean;
-  /** Whether this is a unique index */
-  readonly unique: boolean;
-  /** Index key string */
-  readonly indKey: string;
-  /** Array of column indexes */
-  readonly columnIndexes: number[];
-  /** Array of column names */
-  readonly columnNames: string;
-  /** Index definition */
-  readonly definition: string;
-}
-
-/**
  * Interface representing index information for a database table.
  */
 export interface TableIndex {
@@ -124,32 +104,6 @@ export interface TableIndex {
   constraint: 'PRIMARY KEY' | 'UNIQUE' | 'INDEX';
   /** Array of column names included in the index */
   columns: string[];
-}
-
-/**
- * Interface representing foreign key information.
- */
-export interface TableForeignKey {
-  /** Name of the constraint */
-  readonly constraintName: string | null;
-  /** Type of constraint */
-  readonly constraintType: ConstraintType;
-  /** Source schema name */
-  readonly sourceSchema: string | null;
-  /** Source table name */
-  readonly sourceTable: string | null;
-  /** Source column name */
-  readonly sourceColumn: string | null;
-  /** Target schema name */
-  readonly targetSchema: string | null;
-  /** Target table name */
-  readonly targetTable: string | null;
-  /** Target column name */
-  readonly targetColumn: string | null;
-  /** Extra column information */
-  readonly extra: string | null;
-  /** Identity generation */
-  readonly generation: string | null;
 }
 
 /**
