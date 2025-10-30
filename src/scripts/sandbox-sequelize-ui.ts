@@ -20,7 +20,8 @@ import FileHelper from '../helpers/FileHelper';
 import { association, field, type Field, model, type Schema } from '~/libs/sequelize-ui/schema/schema';
 import { type Association, AssociationTypeType } from '~/libs/sequelize-ui/schema/association';
 import resolvedDataTypeOptions from '~/libs/sequelize-ui/resolved-dataType-options';
-import DbUtils, { Relationship, RelationshipType } from '~/classes/DbUtils';
+import DbUtils, { RelationshipType } from '~/classes/DbUtils';
+import type { Relationship } from '~/typings/utils';
 
 /**
  * Converts a relationship type to an association type.
