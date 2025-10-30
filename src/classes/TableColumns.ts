@@ -52,7 +52,7 @@ export interface ColumnInfo {
   };
 
   /** The raw default value of the column */
-  defaultValueRaw: unknown | null;
+  defaultValueRaw: string | null;
 
   /** The escaped default value of the column */
   defaultValue: unknown;
