@@ -4,14 +4,70 @@
  * @see https://github.com/blacksmoke26
  */
 
+// types
 import type { Knex } from 'knex';
 import type { TableColumnInfo } from '~/typings/knex';
 
-/** Types of constraints that can be applied to a table */
+// helpers
+import FileHelper from '~/helpers/FileHelper';
+
+/**
+ * Enum representing the types of constraints that can be applied to a database table.
+ */
 export enum ConstraintType {
+  /** Primary key constraint */
   PrimaryKey = 'PRIMARY KEY',
+  /** Foreign key constraint */
   ForeignKey = 'FOREIGN KEY',
+  /** Unique constraint */
   Unique = 'UNIQUE',
+}
+
+/**
+ * Enum representing the types of relationships that can exist between database tables.
+ */
+export enum RelationshipType {
+  /** BelongsTo relationship (many-to-one) */
+  BelongsTo = 'BelongsTo',
+  /** HasOne relationship (one-to-one) */
+  HasOne = 'HasOne',
+  /** HasMany relationship (one-to-many) */
+  HasMany = 'HasMany',
+  /** ManyToMany relationship (many-to-many) */
+  ManyToMany = 'ManyToMany',
+}
+
+/**
+ * Interface representing a relationship between two database tables.
+ */
+export interface Relationship {
+  /** Type of relationship (e.g., BelongsTo, HasOne) */
+  type: RelationshipType;
+  /** Source table information (the "many" side in most cases) */
+  source: {
+    /** Database schema name */
+    schema: string;
+    /** Table name */
+    table: string;
+    /** Column name that participates in the relationship */
+    column: string;
+  };
+  /** Target table information (the "one" side in most cases) */
+  target: {
+    /** Database schema name */
+    schema: string;
+    /** Table name */
+    table: string;
+    /** Column name that participates in the relationship */
+    column: string;
+  };
+  /** Junction table information for ManyToMany relationships */
+  junction: {
+    /** Database schema name of the junction table (null for non-ManyToMany) */
+    schema: string | null;
+    /** Junction table name (null for non-ManyToMany) */
+    table: string | null;
+  };
 }
 
 /**
@@ -212,20 +268,18 @@ export default abstract class DbUtils {
     schemaName: string = 'public',
   ): Promise<Readonly<string[]>> {
     const query = `
-    SELECT name
+    SELECT table_name
     FROM
       information_schema.TABLES
     WHERE
       table_type = 'BASE TABLE'
-      AND table_schema NOT IN ('pg_catalog', 'information_schema')
-      AND TABLE_NAME != 'spatial_ref_sys'
       AND table_schema = ?`;
 
     const { rows = [] } = await knex.raw<{
-      rows: { name: string }[];
+      rows: { table_name: string }[];
     }>(query, [schemaName]);
 
-    return rows.map((x) => x.name);
+    return rows.map((x) => x.table_name);
   }
 
   /**
@@ -242,21 +296,7 @@ export default abstract class DbUtils {
     columnName: string,
     schemaName: string = 'public',
   ): Promise<Readonly<CompositeTypeData | null>> {
-    const query = `
-      SELECT
-        t.typname as "typeName",
-        array_agg(a.attname ORDER BY a.attnum) as "attributeNames",
-        array_agg(format_type(a.atttypid, a.atttypmod) ORDER BY a.attnum) as "attributeTypes"
-      FROM pg_type t
-      JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-      JOIN pg_attribute a ON a.attrelid = t.typrelid
-      JOIN pg_class c ON c.relname = ?
-      JOIN pg_attribute ca ON ca.attrelid = c.oid AND ca.attname = ?
-      WHERE t.typtype = 'c'
-        AND n.nspname = ?
-        AND t.oid = ca.atttypid
-      GROUP BY t.typname
-    `;
+    const query = FileHelper.readSqlFile('composite-type-data.sql');
 
     const { rows = [] } = (await knex.raw(query, [
       tableName,
@@ -283,26 +323,7 @@ export default abstract class DbUtils {
     columnName: string,
     schemaName: string = 'public',
   ): Promise<Readonly<DomainTypeData | null>> {
-    const query = `
-      SELECT
-        t.typname AS domain_name,
-        bt.typname AS base_type,
-        COALESCE(pg_get_expr(conbin, conrelid), '') AS check_expression,
-        conname AS constraint_name,
-        contype AS constraint_type,
-        pg_get_expr(adbin, adrelid) AS default_value
-      FROM pg_type t
-      JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-      JOIN pg_attribute a ON a.atttypid = t.oid
-      JOIN pg_class c ON c.oid = a.attrelid
-      LEFT JOIN pg_type bt ON t.typbasetype = bt.oid
-      LEFT JOIN pg_constraint co ON co.contypid = t.oid
-      LEFT JOIN pg_attrdef ad ON ad.adrelid = c.oid AND ad.adnum = a.attnum
-      WHERE c.relname = ?
-        AND a.attname = ?
-        AND n.nspname = ?
-        AND t.typtype = 'd'
-    `;
+    const query = FileHelper.readSqlFile('domain-type-data.sql');
 
     try {
       const { rows = [] } = await knex.raw(query, [
@@ -394,51 +415,7 @@ export default abstract class DbUtils {
     tableName: string,
     schemaName: string = 'public',
   ): Promise<Readonly<TableColumnType[]>> {
-    const query = `SELECT
-  pk.constraint_type AS "constraint",
-  c.COLUMN_NAME AS "name",
-  c.column_default AS "defaultValue",
-  c.is_nullable::BOOL AS "nullable",
-  (CASE WHEN c.udt_name = 'hstore' THEN c.udt_name ELSE c.data_type END) || (CASE WHEN c.character_maximum_length IS NOT NULL THEN '(' || c.character_maximum_length || ')' ELSE'' END) AS "type",
-  (
-    SELECT
-      ARRAY_AGG(e.enumlabel)
-    FROM
-      pg_catalog.pg_type t
-      JOIN pg_catalog.pg_enum e ON t.OID = e.enumtypid
-    WHERE
-      t.typname = c.udt_name
-  ) AS "special",
-  (
-    SELECT
-      pgd.description
-    FROM
-      pg_catalog.pg_statio_all_tables AS st
-      INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid = st.relid)
-    WHERE
-      c.ordinal_position = pgd.objsubid
-      AND c.TABLE_NAME = st.relname
-  ) AS "comment"
-FROM
-  information_schema.COLUMNS c
-  LEFT JOIN (
-    SELECT
-      tc.table_schema,
-      tc.TABLE_NAME,
-      cu.COLUMN_NAME,
-      tc.constraint_type
-    FROM
-      information_schema.TABLE_CONSTRAINTS tc
-      JOIN information_schema.KEY_COLUMN_USAGE cu ON tc.table_schema = cu.table_schema
-      AND tc.TABLE_NAME = cu.TABLE_NAME
-      AND tc.CONSTRAINT_NAME = cu.CONSTRAINT_NAME
-      AND tc.constraint_type = 'PRIMARY KEY'
-  ) pk ON pk.table_schema = c.table_schema
-  AND pk.TABLE_NAME = c.TABLE_NAME
-  AND pk.COLUMN_NAME = c.COLUMN_NAME
-WHERE
-  c.TABLE_NAME = ?
-  AND c.table_schema = ?;`;
+    const query = FileHelper.readSqlFile('table-column-types.sql');
 
     const { rows = [] } = await knex.raw<{
       rows: TableColumnType[];
@@ -459,29 +436,7 @@ WHERE
     tableName: string,
     schemaName: string = 'public',
   ): Promise<Readonly<TableElementType[]>> {
-    const query = `SELECT
-      c.column_name AS "columnName",
-      LOWER(c.data_type) AS "dataType",
-      c.udt_name AS "udtName",
-      e.data_type AS "elementType",
-      (
-        SELECT
-          ARRAY_AGG(pe.enumlabel)
-        FROM
-          pg_catalog.pg_type pt
-          JOIN pg_catalog.pg_enum pe ON pt.OID = pe.enumtypid
-        WHERE
-          pt.typname = c.udt_name
-          OR CONCAT ('_', pt.typname) = c.udt_name
-      ) AS "enumData"
-    FROM
-      information_schema.COLUMNS c
-      LEFT JOIN information_schema.element_types e ON (
-        (c.table_catalog, c.table_schema, c.TABLE_NAME, 'TABLE', c.dtd_identifier) = (e.object_catalog, e.object_schema, e.object_name, e.object_type, e.collection_type_identifier)
-      )
-    WHERE
-      c.TABLE_NAME = ?
-      AND c.table_schema = ?;`;
+    const query = FileHelper.readSqlFile('table-element-types.sql');
 
     const { rows = [] } = (await knex.raw(query, [
       tableName,
@@ -531,36 +486,7 @@ WHERE
     tableName: string,
     schemaName: string = 'public',
   ): Promise<Readonly<TableIndexInfo[]>> {
-    const query = `SELECT
-      i.relname AS "name",
-      ix.indisprimary AS "primary",
-      ix.indisunique AS "unique",
-      ix.indkey AS "indKey",
-      ARRAY_AGG(a.attnum) AS "columnIndexes",
-      ARRAY_AGG(a.attname) AS "columnNames",
-      pg_get_indexdef (ix.indexrelid) AS "definition"
-    FROM
-      pg_class t,
-      pg_class i,
-      pg_index ix,
-      pg_attribute a,
-      pg_namespace s
-    WHERE
-      t.OID = ix.indrelid
-      AND i.OID = ix.indexrelid
-      AND a.attrelid = t.OID
-      AND t.relkind = 'r'
-      AND t.relname = ?
-      AND s.OID = t.relnamespace
-      AND s.nspname = ?
-    GROUP BY
-      i.relname,
-      ix.indexrelid,
-      ix.indisprimary,
-      ix.indisunique,
-      ix.indkey
-    ORDER BY
-      i.relname;`;
+    const query = FileHelper.readSqlFile('table-indexes.sql');
 
     const { rows = [] } = await knex.raw<{
       rows: TableIndexInfo[];
@@ -581,11 +507,7 @@ WHERE
     tableName: string,
     schemaName: string = 'public',
   ): Promise<number> {
-    const query = `SELECT COUNT(0) AS "triggerCount"
-              FROM information_schema.triggers AS t
-             WHERE t.event_object_table = ?
-                   AND t.event_object_schema = ?`;
-
+    const query = FileHelper.readSqlFile('triggers-count.sql');
     const { rows = [] } = await knex.raw<{
       rows: { trigger_count: string }[];
     }>(query, [tableName, schemaName]);
@@ -607,28 +529,7 @@ WHERE
     constraintType: ConstraintType | null = null,
     schemaName: string = 'public',
   ): Promise<Readonly<TableForeignKey[]>> {
-    let query = `
-    SELECT DISTINCT
-      tc.constraint_name as "constraintName",
-      tc.constraint_type as "constraintType",
-      tc.constraint_schema as "sourceSchema",
-      tc.table_name as "sourceTable",
-      kcu.column_name as "sourceColumn",
-      CASE WHEN tc.constraint_type = 'FOREIGN KEY' THEN ccu.constraint_schema ELSE null END AS "targetSchema",
-      CASE WHEN tc.constraint_type = 'FOREIGN KEY' THEN ccu.table_name ELSE null END AS "targetTable",
-      CASE WHEN tc.constraint_type = 'FOREIGN KEY' THEN ccu.column_name ELSE null END AS "targetColumn",
-      co.column_default as "extra",
-      co.identity_generation as "generation"
-    FROM information_schema.table_constraints AS tc
-      JOIN information_schema.key_column_usage AS kcu
-        ON tc.table_schema = kcu.table_schema AND tc.table_name = kcu.table_name AND tc.constraint_name = kcu.constraint_name
-      JOIN information_schema.constraint_column_usage AS ccu
-        ON ccu.constraint_schema = tc.constraint_schema AND ccu.constraint_name = tc.constraint_name
-      JOIN information_schema.columns AS co
-        ON co.table_schema = kcu.table_schema AND co.table_name = kcu.table_name AND co.column_name = kcu.column_name
-    WHERE tc.table_name = ?
-      AND tc.table_schema = ?
-    `;
+    let query = FileHelper.readSqlFile('table-constraints.sql');
 
     const params = [tableName, schemaName];
 
@@ -645,6 +546,54 @@ WHERE
   }
 
   /**
+   * Retrieves relationship information between database tables.
+   * @param knex - Knex instance for database connection
+   * @returns Promise resolving to an array of relationship information
+   */
+  public static async getRelationships(knex: Knex): Promise<any> {
+    const query = FileHelper.readSqlFile('database-relationships.sql');
+
+    const relations: Relationship[] = [];
+
+    try {
+      const { rows = [] } = await knex.raw<{
+        rows: {
+          source_schema: string;
+          source_table: string;
+          source_column: string;
+          target_schema: string;
+          target_table: string;
+          target_column: string;
+          relationship_type: string;
+          junction_schema: string | null;
+          junction_table: string | null;
+        }[];
+      }>(query);
+
+      for (const row of rows) {
+        relations.push({
+          type: RelationshipType[row.relationship_type],
+          source: {
+            schema: row.source_schema,
+            table: row.source_table,
+            column: row.source_column,
+          },
+          target: {
+            schema: row.source_schema,
+            table: row.source_table,
+            column: row.source_column,
+          },
+          junction: { schema: row.junction_schema, table: row.junction_table },
+        });
+      }
+
+      return relations;
+    } catch {
+      return [];
+    }
+  }
+
+  /**
    * Retrieves geographic column types for a specified table.
    * @param knex - Knex instance for database connection
    * @param tableName - Name of the table to query
@@ -656,17 +605,7 @@ WHERE
     tableName: string,
     schemaName: string = 'public',
   ): Promise<Readonly<TableGeoType[]>> {
-    const query = `
-    SELECT
-      f_geography_column AS "columnName",
-      TYPE AS "udtName",
-      srid AS "dataType",
-      coord_dimension AS "elementType"
-    FROM
-      geography_columns
-    WHERE
-      f_table_name = ?
-      AND f_table_schema = ?`;
+    const query = FileHelper.readSqlFile('table-geography-types.sql');
 
     try {
       const { rows = [] } = await knex.raw<{
@@ -691,17 +630,7 @@ WHERE
     schemaName: string = 'public',
   ): Promise<Readonly<TableGeoType[]>> {
     try {
-      const query = `
-      SELECT
-        f_geometry_column AS "columnName",
-        TYPE AS "udtName",
-        srid AS "dataType",
-        coord_dimension AS "elementType"
-      FROM
-        geometry_columns
-      WHERE
-        f_table_name = ?
-        AND f_table_schema = ?`;
+      const query = FileHelper.readSqlFile('table-geometry-types.sql');
 
       const { rows = [] } = await knex.raw<{
         rows: TableGeoType[];
