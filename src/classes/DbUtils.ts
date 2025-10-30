@@ -550,7 +550,7 @@ export default abstract class DbUtils {
    * @param knex - Knex instance for database connection
    * @returns Promise resolving to an array of relationship information
    */
-  public static async getRelationships(knex: Knex): Promise<any> {
+  public static async getRelationships(knex: Knex): Promise<Relationship[]> {
     const query = FileHelper.readSqlFile('database-relationships.sql');
 
     const relations: Relationship[] = [];
