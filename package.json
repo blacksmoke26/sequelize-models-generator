@@ -61,6 +61,7 @@
     "quicktype-core": "^23.2.6",
     "randomstring": "^1.3.1",
     "sequelize": "^6.37.7",
+    "sprintf-js": "^1.1.3",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
@@ -85,6 +86,7 @@
     "@types/pg": "^8.15.6",
     "@types/pluralize": "^0.0.33",
     "@types/randomstring": "^1.3.0",
+    "@types/sprintf-js": "^1.1.4",
     "@types/supertest": "^6.0.3",
     "babel-plugin-module-resolver": "^5.0.2",
     "eslint": "^9.38.0",
