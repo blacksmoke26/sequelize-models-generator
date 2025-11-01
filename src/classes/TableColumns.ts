@@ -22,6 +22,9 @@ import TypeScriptTypeParser from '~/parsers/TypeScriptTypeParser';
  * Contains metadata about column types, constraints, defaults, and type mappings
  */
 export interface ColumnInfo {
+  /** The name of the table */
+  table: string;
+
   /** The name of the column */
   name: string;
 
@@ -99,6 +102,7 @@ export default abstract class TableColumns {
       const defaultValue = DefaultValueParser.parse(sequelizeType, columnInfo) as string;
 
       columnInfos.push({
+        table: info.table_name,
         name,
         propertyName: Case.camel(name),
         type: columnType,
