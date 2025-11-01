@@ -10,6 +10,7 @@
     "gen:seqauto": "babel-node ./src/scripts/generate-sequelize-auto.ts --extensions .ts,.js",
     "gen:pggen": "babel-node ./src/scripts/generate-pggen.ts --extensions .ts,.js",
     "gen:migrations": "babel-node ./src/scripts/generate-migrations.ts --extensions .ts,.js",
+    "gen:scaffold": "babel-node ./src/scripts/generate-scaffold-custom/index.ts --extensions .ts,.js",
     "sandbox": "babel-node ./src/scripts/sandbox.ts --extensions .ts,.js",
     "sandbox-sequelize": "babel-node ./src/scripts/sandbox-sequelize-ui.ts --extensions .ts,.js",
     "pgtyped": "npx pgtyped -w -c config.json",
