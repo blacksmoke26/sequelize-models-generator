@@ -6,7 +6,7 @@
 
 // types
 import type { SequelizeType } from '~/constants/sequelize';
-import type { ExclusiveColumnInfo } from '~/classes/DbUtils';
+import type { ExclusiveColumnInfo } from '~/typings/utils';
 
 /**
  * Utility class for parsing and handling default values from database columns.
