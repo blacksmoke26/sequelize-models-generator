@@ -81,4 +81,23 @@ export default abstract class TypeScriptTypeParser {
         TableUtils.toJsonColumnTypeName(tableName, columnName),
       );
   }
+
+  /**
+   * Combines multiple TypeScript interfaces into a single interface.
+   * @param tsInterface - Interfaces to combine.
+   * @returns The combined TypeScript interface as a string.
+   */
+  public static combineInterfaces(
+    tsInterface: string
+  ): string {
+    const [first, ...rest] = tsInterface.split('interface ').filter(x => x?.trim?.());
+    let str = first;
+
+    for (const text of rest) {
+      const [, name = '', props = ''] = text.match?.(/([A-Z][^ ]+) \{([^}]+)}/) ?? [];
+      const fields = props?.replace?.(/\n+|\s+/g, ' ')?.replace?.(/\s+/g, ' ')?.trim?.() ?? '';
+      str = str.replaceAll(`${name};`, `{ ${fields} };`)
+    }
+    return `interface ${str}`;
+  }
 }
