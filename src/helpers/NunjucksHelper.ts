@@ -34,7 +34,27 @@ export default abstract class NunjucksHelper {
    * @throws {Error} If the template file cannot be found or read
    */
   public static renderTemplate(name: string, context: Record<string, any> = {}, options: ConfigureOptions = {}): string {
-    const text = FileHelper.readFile(`${__dirname}/../templates/${name}`);
+    return this.renderFile(`${__dirname}/../templates/${name}`, context, options);
+  }
+
+  /**
+   * Renders a Nunjucks template file with the given context and options.
+   *
+   * @param filename - Absolute path to the template file to render
+   * @param [context] - An object containing the variables to be passed to the template
+   * @param [options] - Optional Nunjucks configuration options (defaults to autoescape: true)
+   * @returns The rendered template as a string
+   *
+   * @example
+   * ```typescript
+   * const rendered = NunjucksHelper.renderTemplate(__dirname + '/welcome.njk', { name: 'John' });
+   * console.log(rendered); // Output: Welcome John!
+   * ```
+   *
+   * @throws {Error} If the template file cannot be found or read
+   */
+  public static renderFile(filename: string, context: Record<string, any> = {}, options: ConfigureOptions = {}): string {
+    const text = FileHelper.readFile(filename);
     return this.renderString(text, context, options);
   }
 
