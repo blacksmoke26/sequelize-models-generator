@@ -10,9 +10,7 @@ import { SequelizeType, TypesMap } from '~/constants/sequelize';
 import ColumnInfoUtils from '~/classes/ColumnInfoUtils';
 
 // types
-import type { Knex } from 'knex';
-import type { TableColumnInfo } from '~/typings/knex';
-import { ExclusiveColumnInfo } from '~/classes/DbUtils';
+import { ExclusiveColumnInfo } from '~/typings/utils';
 
 /**
  * A utility class for parsing and converting PostgreSQL data types to Sequelize data types.
@@ -41,10 +39,7 @@ export default abstract class SequelizeParser {
    * @param args - Optional arguments for the data type (e.g., length, precision).
    * @returns A tuple containing the base type and the formatted type string.
    */
-  public static format(
-    type: string,
-    ...args: (string | number)[]
-  ): [SequelizeType, string] {
+  public static format(type: string, ...args: (string | number)[]): [SequelizeType, string] {
     const formattedArgs = args.filter((x) => String(x || '').length);
 
     if (!formattedArgs.length) {
@@ -59,29 +54,21 @@ export default abstract class SequelizeParser {
    * @param columnInfo - Information about the column being parsed.
    * @returns A tuple containing the Sequelize type and the formatted type string, or null if the type is not supported.
    */
-  private static parseUserDefined(
-    columnInfo: ExclusiveColumnInfo,
-  ): [SequelizeType, string] | null {
+  private static parseUserDefined(columnInfo: ExclusiveColumnInfo): [SequelizeType, string] | null {
     //region ENUMs: Supported natively by Sequelize.
-    if (
-      columnInfo.element.isEnum
-    ) {
+    if (columnInfo.element.isEnum) {
       return ['ENUM', `ENUM(${columnInfo?.element?.enumData.map((x) => `'${x}'`).join(',')})`];
     }
     //endregion
 
     //region Composite types: Struct-like types with multiple fields
-    if (
-      columnInfo.element.isComposite
-    ) {
+    if (columnInfo.element.isComposite) {
       // TODO: Implement logic here
     }
     //endregion
 
     //region Domain types: Custom types based on existing ones with constraints.
-    if (
-      columnInfo.element.isDomain
-    ) {
+    if (columnInfo.element.isDomain) {
       // TODO: Implement logic here
     }
     //endregion
@@ -89,14 +76,38 @@ export default abstract class SequelizeParser {
     return null;
   }
 
+  public static isEnum(paramsType: string): boolean {
+    return String(paramsType || '').startsWith('ENUM');
+  }
+
+  public static isJSON(paramsType: string): boolean {
+    return String(paramsType || '').startsWith('JSON');
+  }
+
+  /**
+   * Parses ENUM values from a parameter type string.
+   *
+   * @param paramsType - The parameter type string containing ENUM values (e.g., "ENUM('a','b','c')").
+   * @returns An array of ENUM values without quotes.
+   */
+  public static parseEnums(paramsType: string): string[] {
+    if (!this.isEnum(paramsType)) return [];
+
+    const matches = paramsType?.match?.(/ENUM\((.*)\)/);
+    if (!matches) {
+      return [];
+    }
+
+    const [, enums] = matches;
+    return enums.split(',').map((e) => e.replace(/['"]/g, '').trim());
+  }
+
   /**
    * Parses a PostgreSQL data type and converts it to a Sequelize data type.
    *
    * @returns A tuple containing the Sequelize type and the formatted type string.
    */
-  public static parse(
-    info: ExclusiveColumnInfo,
-  ): [SequelizeType, string] {
+  public static parse(info: ExclusiveColumnInfo): [SequelizeType, string] {
     const type = info.element.dataType.toLowerCase();
     let sequelizeType: SequelizeType = TypesMap[type] as SequelizeType;
     const udtType: string = ColumnInfoUtils.toUdtType(info.info);
@@ -118,10 +129,7 @@ export default abstract class SequelizeParser {
         return this.format(sequelizeType, info.info.character_maximum_length);
 
       case 'DECIMAL':
-        return this.format(
-          sequelizeType,
-          ...ColumnInfoUtils.toNumericPrecision(info.info),
-        );
+        return this.format(sequelizeType, ...ColumnInfoUtils.toNumericPrecision(info.info));
 
       case 'REAL':
         return this.format(sequelizeType);
@@ -193,9 +201,7 @@ export default abstract class SequelizeParser {
       }
 
       case 'RANGE': {
-        const rangeType = sequelizeType
-          .replace(/multirange|range$/i, '')
-          .toLowerCase();
+        const rangeType = sequelizeType.replace(/multirange|range$/i, '').toLowerCase();
         return this.format(sequelizeType, TypesMap[rangeType] ?? 'STRING');
       }
 
