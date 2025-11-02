@@ -147,4 +147,21 @@ export default abstract class StringHelper {
   public static relationHasMany(targetTable: string, sourceTable: string) {
     return singular(this.toPropertyName(targetTable)) + pascalCase(sourceTable);
   }
+
+  /**
+   * Generates a belongsToMany relationship name.
+   *
+   * @param targetTable - The table being referenced
+   * @param sourceTable - The table containing the reference
+   * @returns The relationship name
+   *
+   * @example
+   * ```typescript
+   * StringHelper.relationHasMany('posts', 'users') // returns 'postUser'
+   * StringHelper.relationHasMany('comments', 'articles') // returns 'commentArticle'
+   * ```
+   */
+  public static relationBelongsToMany(targetTable: string, sourceTable: string) {
+    return this.toPropertyName(sourceTable) + pascalCase(targetTable);
+  }
 }
