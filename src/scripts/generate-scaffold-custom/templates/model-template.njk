@@ -1,0 +1,31 @@
+import Sequelize, { DataTypes{{ imports }} } from 'sequelize';
+
+import { getInstance } from '../instance';
+
+// base
+import ModelBase from '../base/ModelBase';{{ modelsImport }}
+
+/** Type representing an instance of the {{ modelName }} model. */
+export type {{ modelName }}Instance = InstanceType<typeof {{ modelName }}>;
+
+/** Type representing the attributes of the {{ modelName }} model. */
+export type {{ modelName }}Attributes = Sequelize.InferAttributes<{{ modelName }}>;
+{{ enums }}{{ interfaces }}
+/**
+ * {{ modelName }} model class representing the `{{ schemaName }}`.`{{ tableName }}` table in the database.
+ */
+class {{ modelName }} extends ModelBase<{{ modelName }}> {
+{{ fields }}{{ associations }}
+}
+
+/** Initialize the {{ modelName }} model with its attributes and options */
+{{ modelName }}.init(
+  {
+{{ attributes }}
+  },
+  {
+{{ options }}
+  },
+);
+
+export default {{ modelName }};

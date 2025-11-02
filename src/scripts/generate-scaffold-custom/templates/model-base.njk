@@ -1,0 +1,24 @@
+// classes
+import { Model } from 'sequelize';
+
+// types
+import type { InferAttributes, InferCreationAttributes } from 'sequelize';
+
+/**
+ * Base model class that extends Sequelize Model with additional functionality
+ * @template M - Model type extending Sequelize Model
+ */
+export default class ModelBase<M extends Model> extends Model<InferAttributes<M>, InferCreationAttributes<M>> {
+  /**
+   * Write the changes to database
+   * @returns Returns true when changes has been written, false otherwise
+   */
+  public async saveChanges(): Promise<boolean> {
+    try {
+      await this.save();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
