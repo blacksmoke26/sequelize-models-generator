@@ -162,6 +162,6 @@ export default abstract class StringHelper {
    * ```
    */
   public static relationBelongsToMany(targetTable: string, sourceTable: string) {
-    return this.toPropertyName(sourceTable) + pascalCase(targetTable);
+    return targetTable + pascalCase(sourceTable);
   }
 }
