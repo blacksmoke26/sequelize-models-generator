@@ -1,0 +1,24 @@
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  /**
+   * Apply the migration to the database.
+   * @param {import('sequelize').QueryInterface} queryInterface - The Sequelize query interface.
+   * @param {import('sequelize').Sequelize} Sequelize - The Sequelize instance.
+   * @returns {Promise<void>}
+   */
+  async up (queryInterface, Sequelize) {
+{{ up }}
+  },
+
+  /**
+   * Revert the migration from the database.
+   * @param {import('sequelize').QueryInterface} queryInterface - The Sequelize query interface.
+   * @param {import('sequelize').Sequelize} Sequelize - The Sequelize instance.
+   * @returns {Promise<void>}
+   */
+  async down (queryInterface, Sequelize) {
+{{ down }}
+  },
+};
