@@ -95,7 +95,7 @@ export default async function generateMigrations({
     }
   }
 
-  sleep(1000);
+  await sleep(1000);
 
   await generateViews(knex, schemas, outputDir);
 
