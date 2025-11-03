@@ -63,13 +63,20 @@ export default abstract class SequelizeParser {
 
     //region Composite types: Struct-like types with multiple fields
     if (columnInfo.element.isComposite) {
-      // TODO: Implement logic here
+      const {compositeData} = columnInfo.element;
+      const type = compositeData?.typeName?.toUpperCase();
+
+      const attrs = compositeData.attributeNames.replace(/([}{])/g, '').split(',');
+      const map = attrs.map((x, i) => `${x}: ${compositeData.attributeTypes[i]}`)
+      return [type as SequelizeType, `$RAW.${type}|PostgreSQL's Domain Type '${compositeData?.typeName}(${map.join(', ')})'.`];
     }
     //endregion
 
     //region Domain types: Custom types based on existing ones with constraints.
     if (columnInfo.element.isDomain) {
-      // TODO: Implement logic here
+      const {domainData} = columnInfo.element;
+      const type = TypesMap[domainData?.baseType] ?? 'STRING';
+      return [type as SequelizeType, `$COMMENT.${type}|PostgreSQL's Domain Type '${domainData?.domainName}'.`];
     }
     //endregion
 
@@ -112,7 +119,7 @@ export default abstract class SequelizeParser {
     let sequelizeType: SequelizeType = TypesMap[type] as SequelizeType;
     const udtType: string = ColumnInfoUtils.toUdtType(info.info);
 
-    if (type === 'user-defined') {
+    if (info.element.isDomain || info.element.isEnum || info.element.isComposite) {
       return this.parseUserDefined(info);
     }
 
@@ -120,7 +127,7 @@ export default abstract class SequelizeParser {
       sequelizeType = 'ARRAY';
     }
 
-    if (type.endsWith('range')) {
+    if (!Object.hasOwn(TypesMap, type) && type.endsWith('range')) {
       sequelizeType = 'RANGE';
     }
 
@@ -156,7 +163,7 @@ export default abstract class SequelizeParser {
         return this.format(sequelizeType);
 
       case 'INTEGER':
-        return this.format(sequelizeType, info.info.numeric_precision);
+        return [sequelizeType, info.info.numeric_precision ? `INTEGER({ precision: ${info.info.numeric_precision} })` : 'INTEGER'];
 
       case 'BIGINT':
         return this.format(sequelizeType);
