@@ -271,9 +271,9 @@ export const generateTableInfo = async (
       vars.up += sp(8, `type: '%s', // %s\n`, sequelizeType, y || "PostgreSQL's Native Custom (Composite) Type.");
     } else {
       if (TypeUtils.isArray(columnInfo.type) || TypeUtils.isRange(columnInfo.type)) {
-        sequelizeType = sequelizeType.replace('(', '(DataTypes.');
+        sequelizeType = sequelizeType.replace('(', '(Sequelize.');
       }
-      vars.up += sp(8, `type: DataTypes.%s,\n`, sequelizeType);
+      vars.up += sp(8, `type: Sequelize.%s,\n`, sequelizeType);
     }
 
     if (columnInfo.flags.primary) {
@@ -301,44 +301,6 @@ export const generateTableInfo = async (
     vars.up += sp(8, `allowNull: %s,\n`, String(columnInfo.flags.nullable));
     vars.up += sp(6, `},\n`);
   }
-
-  /*for await (const column of columnsInfo) {
-    vars.up += sp(6, `%s: {\n`, column.propertyName);
-
-    if (column.propertyName !== column.name) {
-      vars.up += sp(8, `field: '%s',\n`, column.name);
-    }
-
-    let sequelizeType = column.sequelizeTypeParams;
-    if (TypeUtils.isArray(column.type) || TypeUtils.isRange(column.type)) {
-      sequelizeType = sequelizeType.replace('(', '(Sequelize.');
-    }
-
-    vars.up += sp(8, `type: Sequelize.%s,\n`, sequelizeType);
-
-    if (column.flags.primary) {
-      vars.up += sp(8, `primaryKey: true,\n`);
-    }
-
-    if (column.flags.autoIncrement) {
-      vars.up += sp(8, `autoIncrement: true,\n`);
-    }
-
-    if (column.comment) {
-      vars.up += sp(8, `comment: '%s',\n`, escape(column.comment));
-    }
-
-    if (column.defaultValue) {
-      if (!TypeUtils.isDate(column.type)) {
-        vars.up += sp(8, `defaultValue: %s,\n`, column.defaultValue);
-      } else {
-        if (column.defaultValueRaw?.startsWith?.('CURRENT_')) vars.up += sp(8, `defaultValue: Sequelize.literal('%s'),\n`, column.defaultValueRaw);
-      }
-    }
-
-    vars.up += sp(8, `allowNull: %s,\n`, String(column.flags.nullable));
-    vars.up += sp(6, `},\n`);
-  }*/
 
   vars.up += sp(4, `});\n`);
 };
