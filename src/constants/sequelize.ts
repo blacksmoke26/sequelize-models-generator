@@ -150,6 +150,13 @@ export const TypesMap = {
   serial: 'INTEGER', // serial is auto-incrementing integer
   bigserial: 'BIGINT', // bigserial is auto-incrementing bigint
 
+  // Ranges (PostgreSQL only)
+  int4range: 'RANGE(INTEGER)',
+  int8range: 'RANGE(BIGINT)',
+  tstzrange: 'RANGE(DATE)',
+  daterange: 'RANGE(DATEONLY)',
+  numrange: 'RANGE(DECIMAL)',
+
   // Character types
   char: 'CHAR',
   character: 'CHAR',
