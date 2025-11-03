@@ -2,6 +2,11 @@
  * @author Junaid Atari <mj.atari@gmail.com>
  * @copyright 2025 Junaid Atari
  * @see https://github.com/blacksmoke26
+ *
+ * @fileoverview This script generates TypeScript models, repositories, and associated files
+ * based on database schema information. It connects to a database using Knex, fetches
+ * schema details, and generates corresponding TypeScript files with proper types,
+ * relationships, and configurations.
  */
 
 import 'dotenv/config';
@@ -21,8 +26,9 @@ import StringHelper from '~/helpers/StringHelper';
 import NunjucksHelper from '~/helpers/NunjucksHelper';
 
 // utils
-import DbUtils, { RelationshipType } from '~/classes/DbUtils';
+import DbUtils from '~/classes/DbUtils';
 import {
+  generateAssociations,
   generateAttributes,
   generateEnums,
   generateFields,
@@ -33,93 +39,17 @@ import {
   generateRelationsImports,
   getInitializerTemplateVars,
   getModelTemplateVars,
-  ModelTemplateVars,
   sp,
 } from './utils';
-import { Relationship } from '~/typings/utils';
-import { pascalCase } from 'change-case';
 
-export const generateAssociations = (relations: Relationship[], modTplVars: ModelTemplateVars, tableName: string) => {
-  if (!relations.length) return;
-
-  let mixins: string = '';
-  let declaration: string = '';
-
-  for (const {type, source, target} of relations) {
-    const sourceModel = StringHelper.tableToModel(source.table);
-    const targetModel = StringHelper.tableToModel(target.table);
-
-    if (type === RelationshipType.HasMany) {
-      const alias = StringHelper.relationBelongsTo(source.table, target.table);
-      declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias, sourceModel, targetModel);
-
-      mixins += '\n';
-      mixins += sp(2, `// %s hasMany %s (as %s)\n`, sourceModel, targetModel, alias);
-      mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s>;\n`, alias, targetModel);
-      mixins += sp(2, `declare get%s: Sequelize.HasManyGetAssociationsMixin<%s>;\n`, pascalCase(alias), targetModel);
-      mixins += sp(2, `declare set%s: Sequelize.HasManySetAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare add%s: Sequelize.HasManyAddAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare add%ses: Sequelize.HasManyAddAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare create%s: Sequelize.HasManyCreateAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
-      mixins += sp(2, `declare remove%s: Sequelize.HasManyRemoveAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare remove%ses: Sequelize.HasManyRemoveAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare has%s: Sequelize.HasManyHasAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare has%ses: Sequelize.HasManyHasAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare count%s: Sequelize.HasManyCountAssociationsMixin;\n`, pascalCase(alias));
-
-    } else if (type === RelationshipType.BelongsTo) {
-      const alias = StringHelper.relationHasOne(target.table);
-      declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias, sourceModel, targetModel);
-
-      mixins += '\n';
-      mixins += sp(2, `// %s belongsTo %s (as %s)\n`, sourceModel, targetModel, alias);
-      mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s>;\n`, alias, targetModel);
-      mixins += sp(2, `declare get%s: Sequelize.BelongsToGetAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
-      mixins += sp(2, `declare set%s: Sequelize.BelongsToSetAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare create%s: Sequelize.BelongsToCreateAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
-
-    } else if (type === RelationshipType.HasOne) {
-      const alias = StringHelper.relationBelongsTo(target.table, source.table);
-      declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias, sourceModel, targetModel);
-
-      mixins += '\n';
-      mixins += sp(2, `// %s hasOne %s (as %s)\n`, sourceModel, targetModel, alias);
-      mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s>;\n`, alias, targetModel);
-      mixins += sp(2, `declare get%s: Sequelize.HasOneGetAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
-      mixins += sp(2, `declare set%s: Sequelize.HasOneSetAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare create%s: Sequelize.HasOneCreateAssociationMixin<%s>;`, pascalCase(alias), targetModel);
-
-    } else if (type === RelationshipType.ManyToMany) {
-      // TODO: Figure out
-      // const alias1 = StringHelper.relationBelongsToMany(target.table, source.table);
-      // const alias2 = StringHelper.relationBelongsToMany(source.table, target.table);
-      // declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias1, sourceModel, targetModel);
-      // declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias2, targetModel, sourceModel);
-      //
-      // mixins += '\n';
-      // mixins += sp(2, `// %s belongsToMany %s (as %s)\n`, sourceModel, targetModel, alias1);
-      // mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s[]>;\n`, alias1, targetModel);
-      // mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s[]>;\n`, alias2, sourceModel);
-      // mixins += sp(2, `declare get%s: Sequelize.BelongsToManyGetAssociationsMixin<%s>;\n`, pascalCase(alias1), targetModel);
-      /*mixins += sp(2, `declare set%s: Sequelize.BelongsToManySetAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare add%s: Sequelize.BelongsToManyAddAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare add%ses: Sequelize.BelongsToManyAddAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare create%s: Sequelize.BelongsToManyCreateAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
-      mixins += sp(2, `declare remove%s: Sequelize.BelongsToManyRemoveAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare remove%ses: Sequelize.BelongsToManyRemoveAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare has%s: Sequelize.BelongsToManyHasAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare has%ses: Sequelize.BelongsToManyHasAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare count%s: Sequelize.BelongsToManyCountAssociationsMixin;\n`, pascalCase(alias));*/
-    }
-  }
-
-  modTplVars.associations += `\n${mixins}\n`;
-  modTplVars.associations += sp(2, `/** Static associations defined for the %s model */\n`, StringHelper.tableToModel(tableName));
-  modTplVars.associations += sp(2, `declare static associations: {\n`);
-  modTplVars.associations += declaration;
-  modTplVars.associations += sp(2, `}`);
-};
-
+/**
+ * Main function to orchestrate the scaffold generation process.
+ * Connects to the database, fetches schema information, and generates
+ * models, repositories, and configuration files.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
 async function run() {
   console.log(await figlet.text('Generate Scaffold App', { font: 'Slant' }));
   // 1️⃣ Configure Knex
@@ -210,6 +140,12 @@ async function run() {
   process.exit();
 }
 
+/**
+ * Writes base files required for the scaffold generation.
+ * This includes ModelBase, RepositoryBase, configuration, and instance files.
+ *
+ * @returns {void}
+ */
 const writeBaseFiles = () => {
   const fileName = FileHelper.rootPath('dist/custom-scaffold/base/ModelBase.ts');
   const text = NunjucksHelper.renderFile(`${__dirname}/templates/model-base.njk`, {}, { autoescape: false });
@@ -232,6 +168,12 @@ const writeBaseFiles = () => {
   console.log('Generated instance file:', insFileName);
 };
 
+/**
+ * Generates and writes a repository file for the given model name.
+ *
+ * @param {string} modelName - The name of the model to generate the repository for.
+ * @returns {void}
+ */
 export const writeRepoFile = (modelName: string) => {
   const text = NunjucksHelper.renderFile(__dirname + '/templates/repo-template.njk', { modelName }, { autoescape: false });
   const fileName = FileHelper.rootPath(`dist/custom-scaffold/repositories/${modelName}Repository.ts`);
