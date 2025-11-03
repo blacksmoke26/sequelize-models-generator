@@ -41,6 +41,7 @@ import {
   getModelTemplateVars,
   sp,
 } from './utils';
+import generateMigrations from '~/scripts/generate-scaffold-custom/migration';
 
 /**
  * Main function to orchestrate the scaffold generation process.
@@ -61,6 +62,7 @@ async function run() {
   fsx.emptydirSync(outputDir);
   fsx.emptydirSync(FileHelper.rootPath('dist/custom-scaffold/base'));
   fsx.emptydirSync(FileHelper.rootPath('dist/custom-scaffold/repositories'));
+  fsx.emptydirSync(FileHelper.rootPath('dist/custom-scaffold/migrations'));
   console.log('Target directories cleaned!');
 
   console.log('Fetching database information...');
@@ -108,6 +110,7 @@ async function run() {
           targetColumn: relation?.target?.column ?? null,
           isFK: relation !== null,
         });
+
         generateAttributes({ columnInfo, modTplVars, tableForeignKeys });
       }
 
@@ -136,6 +139,9 @@ async function run() {
   const fileName = path.normalize(`${outputDir}/index.ts`);
   console.log('Models Initializer generated:', fileName);
   FileHelper.saveTextToFile(fileName, text);
+
+  // generate migration files
+  await generateMigrations({ knex, schemas, indexes, foreignKeys, outputDir: FileHelper.rootPath('dist/custom-scaffold/migrations') });
 
   process.exit();
 }
