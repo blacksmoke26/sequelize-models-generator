@@ -281,11 +281,33 @@ export const generateAttributes = ({
   }
 
   let sequelizeType = columnInfo.sequelizeTypeParams;
-  if (TypeUtils.isArray(columnInfo.type) || TypeUtils.isRange(columnInfo.type)) {
-    sequelizeType = sequelizeType.replace('(', '(DataTypes.');
-  }
 
-  modTplVars.attributes += sp(6, `type: DataTypes.%s,\n`, sequelizeType);
+  if (sequelizeType.startsWith('$QUOTE')) {
+    sequelizeType = sequelizeType.replace('$QUOTE.', '');
+    modTplVars.attributes += sp(6, `type: '%s', // PostgreSQL's Domain Type.\n`, sequelizeType);
+  } else if (sequelizeType.startsWith('$COMMENT')) {
+    const [ty, cm] = sequelizeType.replace('$COMMENT.', '').split('|');
+    modTplVars.attributes += sp(6, `type: DataTypes.%s, // %s\n`, ty, cm);
+  } else if (sequelizeType.startsWith('$RAW')) {
+    const [x, y] = sequelizeType.replace('$RAW.', '').split('|');
+    sequelizeType = x;
+    modTplVars.attributes += sp(6, `type: '%s', // %s\n`, sequelizeType, y || "PostgreSQL's Native Custom (Composite) Type.");
+    modTplVars.attributes += sp(6, `get() {\n`);
+    modTplVars.attributes += sp(8, `const rawValue = this.getDataValue('%s');\n`, columnInfo.propertyName);
+    modTplVars.attributes += sp(8, `// TODO: Implement getter logic here!\n`);
+    modTplVars.attributes += sp(8, `return rawValue;\n`);
+    modTplVars.attributes += sp(6, `},\n`);
+
+    modTplVars.attributes += sp(6, `set(value: string) {\n`);
+    modTplVars.attributes += sp(8, `// TODO: Implement setter logic here!\n`);
+    modTplVars.attributes += sp(8, `this.setDataValue('%s', value);\n`, columnInfo.propertyName);
+    modTplVars.attributes += sp(6, `},\n`);
+  } else {
+    if (TypeUtils.isArray(columnInfo.type) || TypeUtils.isRange(columnInfo.type)) {
+      sequelizeType = sequelizeType.replace('(', '(DataTypes.');
+    }
+    modTplVars.attributes += sp(6, `type: DataTypes.%s,\n`, sequelizeType);
+  }
 
   if (columnInfo.flags.primary) {
     modTplVars.attributes += sp(6, `primaryKey: true,\n`);
