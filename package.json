@@ -83,7 +83,7 @@
     "@tsconfig/node16": "^16.1.6",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.9.2",
+    "@types/node": "^24.10.0",
     "@types/nunjucks": "^3.2.6",
     "@types/pg": "^8.15.6",
     "@types/pluralize": "^0.0.33",
@@ -91,18 +91,18 @@
     "@types/sprintf-js": "^1.1.4",
     "@types/supertest": "^6.0.3",
     "babel-plugin-module-resolver": "^5.0.2",
-    "eslint": "^9.38.0",
+    "eslint": "^9.39.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jest": "^29.0.1",
     "faker": "^6.6.6",
     "jest": "^30.2.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.0",
     "sequelize-auto": "^0.8.8",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.5",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.2"
+    "typescript-eslint": "^8.46.3"
   }
 }
