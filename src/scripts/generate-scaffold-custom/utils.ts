@@ -219,11 +219,11 @@ export const generateOptions = (
     modTplVars.options += sp(4, `timestamps: %s,\n`, 'false');
   }
 
-  if (hasCreatedAt) {
+  if (!hasUpdatedAt && hasCreatedAt) {
     modTplVars.options += sp(4, `createdAt: true,\n`);
   }
 
-  if (hasUpdatedAt) {
+  if (!hasCreatedAt && hasUpdatedAt) {
     modTplVars.options += sp(4, `updatedAt: true,\n`);
   }
 };
