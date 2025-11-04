@@ -167,7 +167,7 @@ export const generateFields = (
  * @param vars - Template variables object to modify
  */
 export const generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVars) => {
-  if (!columnInfo?.tsInterface || !columnInfo?.tsInterface?.includes('interface')) return;
+  if (!columnInfo?.tsInterface || !columnInfo?.tsInterface?.includes?.('interface')) return;
   vars.interfaces += sp(0, `\n/** Interface representing the structure of the %s metadata field. */\n`, columnInfo.sequelizeType);
   vars.interfaces += sp(0, `export %s\n`, TypeScriptTypeParser.combineInterfaces(columnInfo?.tsInterface).trim());
 };
