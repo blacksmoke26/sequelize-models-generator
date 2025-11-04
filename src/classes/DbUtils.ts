@@ -99,7 +99,10 @@ export default abstract class DbUtils {
       information_schema.TABLES
     WHERE
       table_type = 'BASE TABLE'
-      AND table_schema = ?`;
+      AND table_name <> 'SequelizeMeta'
+      AND table_schema = ?
+    ORDER BY
+      table_name ASC`;
 
     const { rows = [] } = await knex.raw<{
       rows: { table_name: string }[];
