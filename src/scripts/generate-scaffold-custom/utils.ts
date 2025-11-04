@@ -167,8 +167,19 @@ export const generateFields = (
  * @param vars - Template variables object to modify
  */
 export const generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVars) => {
-  if (!columnInfo?.tsInterface || !columnInfo?.tsInterface?.includes?.('interface')) return;
+  if (!TypeUtils.isJSON(columnInfo.type)) {
+    return;
+  }
+
   vars.interfaces += sp(0, `\n/** Interface representing the structure of the %s metadata field. */\n`, columnInfo.sequelizeType);
+
+  if (!columnInfo?.tsInterface || !columnInfo?.tsInterface?.includes?.('interface')) {
+    vars.interfaces += sp(0, `export interface %s {\n`, TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name));
+    vars.interfaces += sp(2, `[p: string]: unknown;\n`, TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name));
+    vars.interfaces += sp(0, `}\n`, TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name));
+    return;
+  }
+
   vars.interfaces += sp(0, `export %s\n`, TypeScriptTypeParser.combineInterfaces(columnInfo?.tsInterface).trim());
 };
 
@@ -446,7 +457,7 @@ export const generateRelationsImports = (tableRelations: Relationship[], modTplV
 
   modTplVars.modelsImport += `\n\n// models\n`;
   for (const tableRelation of tableRelations) {
-    if ( imported.includes(tableRelation.target.table)) continue;
+    if (imported.includes(tableRelation.target.table)) continue;
 
     imported.push(tableRelation.target.table);
     modTplVars.modelsImport += sp(
