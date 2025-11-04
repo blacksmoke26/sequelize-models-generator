@@ -283,7 +283,9 @@ export const generateAttributes = ({
 
   let sequelizeType = columnInfo.sequelizeTypeParams;
 
-  if (sequelizeType.startsWith('$QUOTE')) {
+  if (!sequelizeType || sequelizeType === 'null') {
+    modTplVars.attributes += sp(6, `type: DataTypes.%s, // TODO Set data type here. \n`, 'UNKNOWN');
+  } else if (sequelizeType.startsWith('$QUOTE')) {
     sequelizeType = sequelizeType.replace('$QUOTE.', '');
     modTplVars.attributes += sp(6, `type: '%s',\n`, sequelizeType);
   } else if (sequelizeType.startsWith('$COMMENT')) {
