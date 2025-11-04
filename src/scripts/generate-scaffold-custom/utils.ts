@@ -323,7 +323,13 @@ export const generateAttributes = ({
   }
 
   if (columnInfo.defaultValue) {
-    if (!TypeUtils.isDate(columnInfo.type)) {
+    if (TypeUtils.isJSON(columnInfo.type)) {
+      const formatted = String(columnInfo.defaultValue ?? '')
+        .replaceAll('"', "'")
+        .replaceAll('{', "{ ")
+        .replaceAll('}', " }");
+      modTplVars.attributes += sp(6, `defaultValue: %s,\n`, formatted);
+    } else if (!TypeUtils.isDate(columnInfo.type)) {
       modTplVars.attributes += sp(6, `defaultValue: %s,\n`, columnInfo.defaultValue);
     } else {
       if (columnInfo.defaultValueRaw?.startsWith?.('CURRENT_')) modTplVars.attributes += sp(6, `defaultValue: Sequelize.literal('%s'),\n`, columnInfo.defaultValueRaw);
