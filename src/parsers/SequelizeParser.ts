@@ -68,7 +68,7 @@ export default abstract class SequelizeParser {
 
       const attrs = compositeData.attributeNames.replace(/([}{])/g, '').split(',');
       const map = attrs.map((x, i) => `${x}: ${compositeData.attributeTypes[i]}`)
-      return [type as SequelizeType, `$RAW.${type}|PostgreSQL's Domain Type '${compositeData?.typeName}(${map.join(', ')})'.`];
+      return [type as SequelizeType, `$RAW.${type}|PostgreSQL's Composite Type '${compositeData?.typeName}(${map.join(', ')})'.`];
     }
     //endregion
 

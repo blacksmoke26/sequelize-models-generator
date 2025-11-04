@@ -285,7 +285,7 @@ export const generateAttributes = ({
 
   if (sequelizeType.startsWith('$QUOTE')) {
     sequelizeType = sequelizeType.replace('$QUOTE.', '');
-    modTplVars.attributes += sp(6, `type: '%s', // PostgreSQL's Domain Type.\n`, sequelizeType);
+    modTplVars.attributes += sp(6, `type: '%s',\n`, sequelizeType);
   } else if (sequelizeType.startsWith('$COMMENT')) {
     const [ty, cm] = sequelizeType.replace('$COMMENT.', '').split('|');
     modTplVars.attributes += sp(6, `type: DataTypes.%s, // %s\n`, ty, cm);
