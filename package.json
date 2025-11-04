@@ -35,6 +35,8 @@
   "dependencies": {
     "@bryce94/json-to-ts": "^1.0.7",
     "@cpmech/js2ts": "^2.32.1",
+    "@dbml/connector": "^5.1.0",
+    "@dbml/core": "^5.1.0",
     "@hacxy/json2ts": "^0.3.0",
     "@khulalit/json-to-ts-interface": "^1.0.2",
     "@pgtyped/runtime": "^2.4.2",
