@@ -77,7 +77,7 @@ export default abstract class DbUtils {
     const list: Awaited<{ schema_name: string }[]> = await knex
       .select('schema_name')
       .from('information_schema.schemata')
-      .whereNotIn('schema_name', systemSchemas)
+      .whereNotIn('schema_name', ['pg_catalog', 'information_schema', 'pg_toast', ...systemSchemas])
       .orderBy('schema_name');
 
     return list.map((x) => x.schema_name);
