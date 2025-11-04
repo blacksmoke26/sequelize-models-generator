@@ -328,8 +328,8 @@ export const generateAttributes = ({
     if (TypeUtils.isJSON(columnInfo.type)) {
       const formatted = String(columnInfo.defaultValue ?? '')
         .replaceAll('"', "'")
-        .replaceAll('{', "{ ")
-        .replaceAll('}', " }");
+        .replaceAll('{', '{ ')
+        .replaceAll('}', ' }');
       modTplVars.attributes += sp(6, `defaultValue: %s,\n`, formatted);
     } else if (!TypeUtils.isDate(columnInfo.type)) {
       modTplVars.attributes += sp(6, `defaultValue: %s,\n`, columnInfo.defaultValue);
@@ -442,8 +442,13 @@ export const generateInitializer = (relationships: Relationship[], initTplVars: 
 export const generateRelationsImports = (tableRelations: Relationship[], modTplVars: ModelTemplateVars) => {
   if (!tableRelations.length) return;
 
+  const imported: string[] = [];
+
   modTplVars.modelsImport += `\n\n// models\n`;
   for (const tableRelation of tableRelations) {
+    if ( imported.includes(tableRelation.target.table)) continue;
+
+    imported.push(tableRelation.target.table);
     modTplVars.modelsImport += sp(
       0,
       "import %s from './%s';\n",
@@ -464,6 +469,7 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
 
   let mixins: string = '';
   let declaration: string = '';
+  const alreadyAdded: string[] = [];
 
   for (const { type, source, target } of relations) {
     const sourceModel = StringHelper.tableToModel(source.table);
@@ -471,6 +477,10 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
 
     if (type === RelationshipType.HasMany) {
       const alias = StringHelper.relationBelongsTo(source.table, target.table);
+
+      if (alreadyAdded.includes(alias)) continue;
+      alreadyAdded.push(alias);
+
       declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias, sourceModel, targetModel);
 
       mixins += '\n';
@@ -488,6 +498,10 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
       mixins += sp(2, `declare count%s: Sequelize.HasManyCountAssociationsMixin;\n`, pascalCase(alias));
     } else if (type === RelationshipType.BelongsTo) {
       const alias = StringHelper.relationHasOne(target.table);
+
+      if (alreadyAdded.includes(alias)) continue;
+      alreadyAdded.push(alias);
+
       declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias, sourceModel, targetModel);
 
       mixins += '\n';
@@ -498,6 +512,10 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
       mixins += sp(2, `declare create%s: Sequelize.BelongsToCreateAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
     } else if (type === RelationshipType.HasOne) {
       const alias = StringHelper.relationBelongsTo(target.table, source.table);
+
+      if (alreadyAdded.includes(alias)) continue;
+      alreadyAdded.push(alias);
+
       declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias, sourceModel, targetModel);
 
       mixins += '\n';
