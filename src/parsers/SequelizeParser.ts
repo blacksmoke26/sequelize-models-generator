@@ -46,7 +46,7 @@ export default abstract class SequelizeParser {
       return [type as SequelizeType, type];
     }
 
-    return [type as SequelizeType, `${type}(${formattedArgs.join(',')})`];
+    return [type as SequelizeType, `${type}(${formattedArgs.join(', ')})`];
   }
 
   /**
@@ -57,7 +57,7 @@ export default abstract class SequelizeParser {
   private static parseUserDefined(columnInfo: ExclusiveColumnInfo): [SequelizeType, string] | null {
     //region ENUMs: Supported natively by Sequelize.
     if (columnInfo.element.isEnum) {
-      return ['ENUM', `ENUM(${columnInfo?.element?.enumData.map((x) => `'${x}'`).join(',')})`];
+      return ['ENUM', `ENUM(${columnInfo?.element?.enumData.map((x) => `'${x}'`).join(', ')})`];
     }
     //endregion
 
