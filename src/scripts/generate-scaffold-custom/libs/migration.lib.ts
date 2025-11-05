@@ -14,12 +14,9 @@ import { snakeCase } from 'change-case';
 import DbMigrator from '~/classes/DbMigrator';
 import TypeUtils from '~/classes/TypeUtils';
 
-// helpers
-import NunjucksHelper from '~/helpers/NunjucksHelper';
-import FileHelper from '~/helpers/FileHelper';
-
 // utils
 import { sp } from '../utils';
+import { renderOut } from '../writer';
 
 // types
 import type { Knex } from 'knex';
@@ -84,15 +81,10 @@ export const createFilename = (outDir: string, fileName: string) => {
  * @param variables - Object containing up and down migration strings
  */
 export const createFile = (fileName: string, variables: { up: string; down: string }): void => {
-  const context = {
+  renderOut('migration-template', fileName, {
     up: variables.up?.trimEnd(),
     down: variables.down?.trimEnd(),
-  };
-
-  const text = NunjucksHelper.renderFile(path.normalize(`${__dirname}/../templates/migration-template.njk`), context, { autoescape: false });
-
-  const filePath = path.normalize(fileName);
-  FileHelper.saveTextToFile(filePath, text);
+  })
 };
 
 /**
