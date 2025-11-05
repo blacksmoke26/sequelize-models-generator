@@ -5,13 +5,14 @@
  */
 
 import * as fs from 'node:fs';
-import {dirname} from 'node:path';
+import path, {dirname} from 'node:path';
 
 import { importer } from '@dbml/core';
 import { connector } from '@dbml/connector';
 
 // helpers
 import FileHelper from '~/helpers/FileHelper';
+import NunjucksHelper from '~/helpers/NunjucksHelper';
 
 /**
  * Exports a database schema to a DBML (Database Markup Language) diagram file.
@@ -58,6 +59,12 @@ export default async function exportDbmlDiagram(connectionString: string, output
 
     FileHelper.saveTextToFile(outputFile, output);
 
+
+    // Generate README content for the diagram
+    const text = NunjucksHelper.renderFile(__dirname + '/templates/dbml-readme.njk', {filename: path.basename(outputFile)}, { autoescape: false });
+    // Save README file alongside the diagram
+    FileHelper.saveTextToFile(`${path.dirname(outputFile)}/README.md`, text);
+
     console.log(`Successfully exported DBML diagram to ${outputFile}`);
   } catch (error: any) {
     // Log detailed error information
@@ -70,8 +77,5 @@ export default async function exportDbmlDiagram(connectionString: string, output
         errorType: error.name,
       },
     });
-
-    // Re-throw to propagate the error
-    throw error;
   }
 }

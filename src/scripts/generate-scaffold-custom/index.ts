@@ -184,11 +184,6 @@ async function run(): Promise<void> {
 
    // Export database schema to DBML format
    await exportDbmlDiagram(connectionString, filePath);
-
-   // Generate README content for the diagram
-   const text = NunjucksHelper.renderFile(__dirname + '/templates/dbml-readme.njk', {filename: path.basename(filePath)}, { autoescape: false });
-   // Save README file alongside the diagram
-   FileHelper.saveTextToFile(`${outputDir}/README.md`, text);
  };
 
 /**
