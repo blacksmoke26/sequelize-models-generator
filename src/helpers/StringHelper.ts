@@ -164,4 +164,24 @@ export default abstract class StringHelper {
   public static relationBelongsToMany(targetTable: string, sourceTable: string) {
     return targetTable + pascalCase(sourceTable);
   }
+
+  /**
+   * Removes '_id' or 'Id' suffix from a column name.
+   *
+   * @param columnName - The column name to process
+   * @param pascalize - Whether to convert the result to PascalCase (default: false)
+   * @returns The column name without ID suffix, optionally in PascalCase
+   *
+   * @example
+   * ```typescript
+   * StringHelper.omitId('user_id') // returns 'user'
+   * StringHelper.omitId('postId') // returns 'post'
+   * StringHelper.omitId('user_id', true) // returns 'User'
+   * StringHelper.omitId('postId', true) // returns 'Post'
+   * ```
+   */
+  public static omitId(columnName: string, pascalize: boolean = false) {
+    const column = String(columnName || '').replace(/_id|Id/g, '');
+    return pascalize ? pascalCase(column) : column;
+  }
 }
