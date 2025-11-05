@@ -75,7 +75,7 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
       mixins += sp(2, `declare create%s: Sequelize.BelongsToCreateAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
     } else if (type === RelationshipType.HasOne) {
       //const alias = StringHelper.relationBelongsTo(target.table, source.table);
-      const alias = singular(StringHelper.toPropertyName(target.table)) + StringHelper.omitId(target.column, true);
+      const alias = singular(StringHelper.toPropertyName(source.table)) + StringHelper.omitId(source.column, true);
 
       if (alreadyAdded.includes(alias)) continue;
       alreadyAdded.push(alias);
