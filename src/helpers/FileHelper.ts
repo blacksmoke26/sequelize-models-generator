@@ -14,9 +14,28 @@ import path from 'node:path';
  */
 export default abstract class FileHelper {
   /**
+   * Joins multiple path segments into a single normalized path.
+   * @param join - Path segments to join.
+   * @returns A normalized path string.
+   * @example
+   * ```typescript
+   * const joinedPath = FileHelper.join('src', 'components', 'Button.tsx');
+   * console.log(joinedPath); // Output: 'src/components/Button.tsx'
+   * ```
+   */
+  public static join(...join: string[]): string {
+    return path.normalize(path.join(...join));
+  }
+
+  /**
    * Saves a JSON string to a file at the given path.
    * @param filePath The path where the file will be saved.
    * @param jsonString The JSON string to save.
+   * @example
+   * ```typescript
+   * const jsonData = JSON.stringify({ name: 'John', age: 30 });
+   * FileHelper.saveJsonToFile('data.json', jsonData);
+   * ```
    */
   public static saveJsonToFile(filePath: string, jsonString: string): void {
     try {
@@ -63,10 +82,7 @@ export default abstract class FileHelper {
    * ```
    */
   public static readSqlFile(filename: string): string {
-    return fs.readFileSync(
-      path.join(__dirname, '..', 'sqls', filename),
-      'utf8',
-    );
+    return fs.readFileSync(path.join(__dirname, '..', 'sqls', filename), 'utf8');
   }
 
   /**
