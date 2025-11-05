@@ -50,19 +50,20 @@ import { generateAssociations, generateInitializer } from './associations';
  * models, repositories, and configuration files.
  */
 async function run(): Promise<void> {
-  console.log(await figlet.text('Generate Scaffold App', { font: 'Slant' }));
+  console.log(await figlet.text('Sequelize Scaffold App', { font: 'Slant' }));
   // 1️⃣ Configure Knex
   const knex = KnexClient.create();
 
-  const baseDir = FileHelper.rootPath('dist/custom-scaffold');
+  const baseDir = FileHelper.rootPath('dist/custom-scaffold/database');
   const outputDir = path.normalize(`${baseDir}/models`);
 
   console.log('Cleaning up target directory...');
+  fsx.emptydirSync(baseDir);
   fsx.emptydirSync(outputDir);
-  fsx.emptydirSync(path.normalize(`${baseDir}/base`));
-  fsx.emptydirSync(path.normalize(`${baseDir}/diagrams`));
-  fsx.emptydirSync(path.normalize(`${baseDir}/repositories`));
-  fsx.emptydirSync(path.normalize(`${baseDir}/migrations`));
+  fsx.emptydirSync(FileHelper.join(baseDir, 'base'));
+  fsx.emptydirSync(FileHelper.join(baseDir, 'diagrams'));
+  fsx.emptydirSync(FileHelper.join(baseDir, 'repositories'));
+  fsx.emptydirSync(FileHelper.join(baseDir, 'migrations'));
   console.log('Target directories cleaned!');
 
   console.log('Fetching database information...');
@@ -71,7 +72,7 @@ async function run(): Promise<void> {
   const relationships = await DbUtils.getRelationships(knex);
   const foreignKeys = await DbUtils.getForeignKeys(knex);
 
-  writeBaseFiles();
+  writeBaseFiles(baseDir);
 
   const initTplVars = getInitializerTemplateVars();
 
@@ -141,25 +142,25 @@ async function run(): Promise<void> {
       modTplVars.attributes = modTplVars.attributes.trimEnd();
 
       // Render and save the model file
-      const text = NunjucksHelper.renderFile(__dirname + '/templates/model-template.njk', modTplVars, { autoescape: false });
-      const fileName = path.normalize(`${outputDir}/${modelName}.ts`);
+      const text = NunjucksHelper.renderFile(`${__dirname}/templates/model-template.njk`, modTplVars, { autoescape: false });
+      const fileName = FileHelper.join(outputDir, `${modelName}.ts`);
       console.log('Model generated:', fileName);
       FileHelper.saveTextToFile(fileName, text);
 
       // Generate repository file for the model
-      writeRepoFile(StringHelper.tableToModel(tableName));
+      writeRepoFile(baseDir, StringHelper.tableToModel(tableName));
     }
   }
 
   generateInitializer(relationships, initTplVars);
 
-  const text = NunjucksHelper.renderFile(__dirname + '/templates/models-initializer.njk', initTplVars, { autoescape: false });
+  const text = NunjucksHelper.renderFile(`${__dirname}/templates/models-initializer.njk`, initTplVars, { autoescape: false });
   const fileName = path.normalize(`${outputDir}/index.ts`);
   console.log('Models Initializer generated:', fileName);
   FileHelper.saveTextToFile(fileName, text);
 
   // generate migration files
-  await generateMigrations({ knex, schemas, indexes, foreignKeys, outputDir: path.normalize(`${baseDir}/migrations`) });
+  await generateMigrations({ knex, schemas, indexes, foreignKeys, outputDir: FileHelper.join(baseDir, 'migrations') });
 
   // generate ERD diagrams
   await writeDiagrams(path.normalize(`${baseDir}/diagrams`));
@@ -178,40 +179,36 @@ async function run(): Promise<void> {
  const writeDiagrams = async (outputDir: string): Promise<void> => {
    // Get database connection string from environment
    const connectionString: string = EnvHelper.getConnectionString();
-   // Define output path for DBML diagram file
-   const filePath = path.normalize(`${outputDir}/database.dbml`);
-
    // Export database schema to DBML format
-   await exportDbmlDiagram(connectionString, filePath);
+   await exportDbmlDiagram(connectionString, FileHelper.join(outputDir, 'database.dbml'));
  };
 
 /**
  * Writes base files required for the scaffold generation.
+ * @param {string} baseDir - The base directory path where the repositories folder is located.
  * This includes ModelBase, RepositoryBase, configuration, and instance files.
- *
- * @returns {void}
  */
- const writeBaseFiles = (): void => {
+ const writeBaseFiles = (baseDir: string): void => {
    // Generate ModelBase.ts from template
-   const fileName = FileHelper.rootPath('dist/custom-scaffold/base/ModelBase.ts');
+   const fileName = FileHelper.join(baseDir, 'base/ModelBase.ts');
    const text = NunjucksHelper.renderFile(`${__dirname}/templates/model-base.njk`, {}, { autoescape: false });
    FileHelper.saveTextToFile(fileName, text);
    console.log('Generated ModelBase:', fileName);
 
    // Generate RepositoryBase.ts from template
-   const rbFileName = FileHelper.rootPath('dist/custom-scaffold/base/RepositoryBase.ts');
+   const rbFileName = FileHelper.join(baseDir, 'base/RepositoryBase.ts');
    const rbText = NunjucksHelper.renderFile(`${__dirname}/templates/repo-base.njk`, {}, { autoescape: false });
    FileHelper.saveTextToFile(rbFileName, rbText);
    console.log('Generated RepositoryBase:', rbFileName);
 
    // Generate configuration.ts from template
-   const cfgFileName = FileHelper.rootPath('dist/custom-scaffold/configuration.ts');
+   const cfgFileName = FileHelper.join(baseDir, 'configuration.ts');
    const cfgText = NunjucksHelper.renderFile(`${__dirname}/templates/config-template.njk`, {}, { autoescape: false });
    FileHelper.saveTextToFile(cfgFileName, cfgText);
    console.log('Generated configuration file:', cfgFileName);
 
    // Generate instance.ts from template
-   const insFileName = FileHelper.rootPath('dist/custom-scaffold/instance.ts');
+   const insFileName = FileHelper.join(baseDir, 'instance.ts');
    const insText = NunjucksHelper.renderFile(`${__dirname}/templates/instance-template.njk`, {}, { autoescape: false });
    FileHelper.saveTextToFile(insFileName, insText);
    console.log('Generated instance file:', insFileName);
@@ -219,13 +216,16 @@ async function run(): Promise<void> {
 
 /**
  * Generates and writes a repository file for the given model name.
+ ** This function generates a repository file for the given model name using a template.
+ * It renders the repository template with the provided model name and saves it to the
+ * repositories directory.
  *
+ * @param {string} baseDir - The base directory path where the repositories folder is located.
  * @param {string} modelName - The name of the model to generate the repository for.
- * @returns {void}
  */
-export const writeRepoFile = (modelName: string) => {
-  const text = NunjucksHelper.renderFile(__dirname + '/templates/repo-template.njk', { modelName }, { autoescape: false });
-  const fileName = FileHelper.rootPath(`dist/custom-scaffold/repositories/${modelName}Repository.ts`);
+export const writeRepoFile = (baseDir: string, modelName: string): void => {
+  const text = NunjucksHelper.renderFile(`${__dirname}/templates/repo-template.njk`, { modelName }, { autoescape: false });
+  const fileName = FileHelper.join(baseDir, 'repositories', `${modelName}Repository.ts`);
   console.log('Repository generated:', fileName);
   FileHelper.saveTextToFile(fileName, text);
 };
