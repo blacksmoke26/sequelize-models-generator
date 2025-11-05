@@ -17,6 +17,7 @@ import fsx from 'fs-extra';
 import { pascal } from 'case';
 
 // classes
+import DbUtils from '~/classes/DbUtils';
 import KnexClient from '~/classes/KnexClient';
 import TableColumns from '~/classes/TableColumns';
 
@@ -24,16 +25,14 @@ import TableColumns from '~/classes/TableColumns';
 import FileHelper from '~/helpers/FileHelper';
 import StringHelper from '~/helpers/StringHelper';
 import NunjucksHelper from '~/helpers/NunjucksHelper';
+import EnvHelper from '~/helpers/EnvHelper';
 
 // utils
-import DbUtils from '~/classes/DbUtils';
 import {
-  generateAssociations,
   generateAttributes,
   generateEnums,
   generateFields,
   generateIndexes,
-  generateInitializer,
   generateInterfaces,
   generateOptions,
   generateRelationsImports,
@@ -41,9 +40,9 @@ import {
   getModelTemplateVars,
   sp,
 } from './utils';
-import generateMigrations from '~/scripts/generate-scaffold-custom/migration';
-import EnvHelper from '~/helpers/EnvHelper';
-import exportDbmlDiagram from '~/scripts/generate-scaffold-custom/dbml';
+import exportDbmlDiagram from './dbml';
+import generateMigrations from './migration';
+import { generateAssociations, generateInitializer } from './associations';
 
 /**
  * Main function to orchestrate the scaffold generation process.
