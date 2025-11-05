@@ -95,7 +95,6 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
       mixins += '\n';
       mixins += sp(2, `// %s belongsToMany %s (as %s)\n`, sourceModel, targetModel, alias);
       mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s[]>;\n`, alias, targetModel);
-      mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s[]>;\n`, alias, sourceModel);
       mixins += sp(2, `declare get%s: Sequelize.BelongsToManyGetAssociationsMixin<%s>;\n`, pascalCase(alias), targetModel);
       mixins += sp(2, `declare set%s: Sequelize.BelongsToManySetAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare add%s: Sequelize.BelongsToManyAddAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
