@@ -5,8 +5,8 @@
  */
 
 import { pascal } from 'case';
-import { singular } from 'pluralize';
-import { pascalCase } from 'change-case';
+import pluralize, { singular } from 'pluralize';
+import { camelCase, pascalCase } from 'change-case';
 
 // helpers
 import StringHelper from '~/helpers/StringHelper';
@@ -32,12 +32,13 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
   let declaration: string = '';
   const alreadyAdded: string[] = [];
 
-  for (const { type, source, target } of relations) {
+  for (const { type, source, target, junction } of relations) {
     const sourceModel = StringHelper.tableToModel(source.table);
     const targetModel = StringHelper.tableToModel(target.table);
 
     if (type === RelationshipType.HasMany) {
-      const alias = StringHelper.relationBelongsTo(source.table, target.table);
+      //const alias = StringHelper.relationBelongsTo(source.table, target.table);
+      const alias = singular(StringHelper.toPropertyName(source.table)) + pluralize(StringHelper.omitId(source.column, true));
 
       if (alreadyAdded.includes(alias)) continue;
       alreadyAdded.push(alias);
@@ -58,7 +59,8 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
       mixins += sp(2, `declare has%ses: Sequelize.HasManyHasAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare count%s: Sequelize.HasManyCountAssociationsMixin;\n`, pascalCase(alias));
     } else if (type === RelationshipType.BelongsTo) {
-      const alias = StringHelper.relationHasOne(target.table);
+      //const alias = StringHelper.relationHasOne(target.table);
+      const alias = singular(StringHelper.toPropertyName(target.table)) + StringHelper.omitId(target.column, true);
 
       if (alreadyAdded.includes(alias)) continue;
       alreadyAdded.push(alias);
@@ -72,7 +74,8 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
       mixins += sp(2, `declare set%s: Sequelize.BelongsToSetAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare create%s: Sequelize.BelongsToCreateAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
     } else if (type === RelationshipType.HasOne) {
-      const alias = StringHelper.relationBelongsTo(target.table, source.table);
+      //const alias = StringHelper.relationBelongsTo(target.table, source.table);
+      const alias = singular(StringHelper.toPropertyName(target.table)) + StringHelper.omitId(target.column, true);
 
       if (alreadyAdded.includes(alias)) continue;
       alreadyAdded.push(alias);
@@ -86,18 +89,15 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
       mixins += sp(2, `declare set%s: Sequelize.HasOneSetAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare create%s: Sequelize.HasOneCreateAssociationMixin<%s>;`, pascalCase(alias), targetModel);
     } else if (type === RelationshipType.ManyToMany) {
-      // TODO: Figure out
-      // const alias1 = StringHelper.relationBelongsToMany(target.table, source.table);
-      // const alias2 = StringHelper.relationBelongsToMany(source.table, target.table);
-      // declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias1, sourceModel, targetModel);
-      // declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias2, targetModel, sourceModel);
-      //
-      // mixins += '\n';
-      // mixins += sp(2, `// %s belongsToMany %s (as %s)\n`, sourceModel, targetModel, alias1);
-      // mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s[]>;\n`, alias1, targetModel);
-      // mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s[]>;\n`, alias2, sourceModel);
-      // mixins += sp(2, `declare get%s: Sequelize.BelongsToManyGetAssociationsMixin<%s>;\n`, pascalCase(alias1), targetModel);
-      /*mixins += sp(2, `declare set%s: Sequelize.BelongsToManySetAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
+      const alias = camelCase(pascalCase(singular(junction.table))) + pluralize(StringHelper.omitId(source.table, true)) + 'es';
+      declaration += sp(4, '%s: Sequelize.Association<%s, %s>;\n', alias, targetModel, sourceModel);
+
+      mixins += '\n';
+      mixins += sp(2, `// %s belongsToMany %s (as %s)\n`, sourceModel, targetModel, alias);
+      mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s[]>;\n`, alias, targetModel);
+      mixins += sp(2, `declare %s?: Sequelize.NonAttribute<%s[]>;\n`, alias, sourceModel);
+      mixins += sp(2, `declare get%s: Sequelize.BelongsToManyGetAssociationsMixin<%s>;\n`, pascalCase(alias), targetModel);
+      mixins += sp(2, `declare set%s: Sequelize.BelongsToManySetAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare add%s: Sequelize.BelongsToManyAddAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare add%ses: Sequelize.BelongsToManyAddAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare create%s: Sequelize.BelongsToManyCreateAssociationMixin<%s>;\n`, pascalCase(alias), targetModel);
@@ -105,7 +105,7 @@ export const generateAssociations = (relations: Relationship[], modTplVars: Mode
       mixins += sp(2, `declare remove%ses: Sequelize.BelongsToManyRemoveAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare has%s: Sequelize.BelongsToManyHasAssociationMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
       mixins += sp(2, `declare has%ses: Sequelize.BelongsToManyHasAssociationsMixin<%s, %s>;\n`, pascalCase(alias), targetModel, 'number');
-      mixins += sp(2, `declare count%s: Sequelize.BelongsToManyCountAssociationsMixin;\n`, pascalCase(alias));*/
+      mixins += sp(2, `declare count%s: Sequelize.BelongsToManyCountAssociationsMixin;\n`, pascalCase(alias));
     }
   }
 
@@ -131,7 +131,9 @@ export const generateInitializer = (relationships: Relationship[], initTplVars: 
     switch (type) {
       case RelationshipType.BelongsTo: {
         relation = 'belongsTo';
-        alias = StringHelper.relationBelongsTo(target.table, source.table);
+        //alias = StringHelper.relationBelongsTo(target.table, source.table);
+        //alias = singular(StringHelper.toPropertyName(target.table)) + StringHelper.tableToModel(source.table);
+        alias = singular(StringHelper.toPropertyName(target.table)) + StringHelper.omitId(target.column, true);
         initTplVars.associations += sp(
           2,
           `%s.%s(%s, { as: '%s', foreignKey: '%s' });\n`,
@@ -145,7 +147,9 @@ export const generateInitializer = (relationships: Relationship[], initTplVars: 
       }
       case RelationshipType.HasOne: {
         relation = 'hasOne';
-        alias = StringHelper.relationHasOne(source.table);
+        // alias = StringHelper.relationHasOne(source.table);
+        //alias = StringHelper.toPropertyName(singular(source.table));
+        alias = singular(StringHelper.toPropertyName(source.table)) + StringHelper.omitId(source.column, true);
 
         initTplVars.associations += sp(
           2,
@@ -160,7 +164,9 @@ export const generateInitializer = (relationships: Relationship[], initTplVars: 
       }
       case RelationshipType.HasMany: {
         relation = 'hasMany';
-        alias = StringHelper.relationHasMany(target.table, source.table);
+        // alias = StringHelper.relationHasMany(target.table, source.table);
+        //alias = singular(StringHelper.toPropertyName(target.table)) + pascalCase(source.table);
+        alias = singular(StringHelper.toPropertyName(source.table)) + pluralize(StringHelper.omitId(source.column, true));
 
         initTplVars.associations += sp(
           2,
@@ -175,6 +181,8 @@ export const generateInitializer = (relationships: Relationship[], initTplVars: 
       }
       case RelationshipType.ManyToMany: {
         relation = 'belongsToMany';
+        //alias = StringHelper.relationBelongsToMany(source.table, target.table),
+        alias = camelCase(pascalCase(singular(junction.table))) + pluralize(StringHelper.omitId(source.table, true)) + 'es';
 
         initTplVars.associations += sp(
           2,
@@ -182,22 +190,10 @@ export const generateInitializer = (relationships: Relationship[], initTplVars: 
           StringHelper.tableToModel(source.table),
           relation,
           StringHelper.tableToModel(target.table),
-          StringHelper.relationBelongsToMany(source.table, target.table),
+          alias,
           StringHelper.tableToModel(junction.table),
           singular(source.table) + pascal(target.column),
           singular(target.table) + pascal(source.column),
-        );
-
-        initTplVars.associations += sp(
-          2,
-          `%s.%s(%s, { as: '%s', through: %s, foreignKey: '%s', otherKey: '%s' });\n`,
-          StringHelper.tableToModel(target.table),
-          relation,
-          StringHelper.tableToModel(source.table),
-          StringHelper.relationBelongsToMany(target.table, source.table),
-          StringHelper.tableToModel(junction.table),
-          singular(target.table) + pascal(source.column),
-          singular(source.table) + pascal(target.column),
         );
         break;
       }
