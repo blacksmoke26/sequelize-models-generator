@@ -38,10 +38,9 @@ import {
   getModelTemplateVars,
   sp,
 } from './utils';
-import { renderOut, writeBaseFiles, writeDiagrams, writeRepoFile } from './writer';
+import { renderOut, writeBaseFiles, writeDiagrams, writeRepoFile, writeServerFile } from './writer';
 import generateMigrations from './migration';
 import { generateAssociations, generateInitializer } from './associations';
-
 
 /**
  * Main function to orchestrate the scaffold generation process.
@@ -55,10 +54,13 @@ async function run(): Promise<void> {
 
   const DIR_NAME: string = 'database';
 
-  const baseDir = FileHelper.rootPath(`dist/custom-scaffold/src/${DIR_NAME}`);
+  const ROOT_DIR = FileHelper.rootPath(`dist/custom-scaffold`);
+
+  const baseDir = FileHelper.join(ROOT_DIR, `src/${DIR_NAME}`);
   const outputDir = path.normalize(`${baseDir}/models`);
 
-  console.log('Cleaning up target directory...');
+  console.log('Cleaning up target directories...');
+  fsx.emptydirSync(ROOT_DIR);
   fsx.emptydirSync(baseDir);
   fsx.emptydirSync(outputDir);
   fsx.emptydirSync(FileHelper.join(baseDir, 'base'));
@@ -74,6 +76,8 @@ async function run(): Promise<void> {
   const indexes = await DbUtils.getIndexes(knex);
   const relationships = await DbUtils.getRelationships(knex);
   const foreignKeys = await DbUtils.getForeignKeys(knex);
+
+  let anyModelName: string = undefined;
 
   writeBaseFiles(baseDir, DIR_NAME);
 
@@ -146,14 +150,19 @@ async function run(): Promise<void> {
 
       // Render and save the model file
       const fileName = FileHelper.join(outputDir, `${modelName}.ts`);
-      renderOut('model-template', fileName, modTplVars);
+      renderOut('model-template', fileName, { ...modTplVars, dirname: DIR_NAME });
       console.log('Model generated:', fileName);
 
+      if (!anyModelName) {
+        anyModelName = modelName;
+      }
+
       // Generate repository file for the model
-      writeRepoFile(baseDir, StringHelper.tableToModel(tableName));
+      writeRepoFile(baseDir, StringHelper.tableToModel(tableName), DIR_NAME);
     }
   }
 
+  writeServerFile(FileHelper.dirname(baseDir), anyModelName, DIR_NAME);
   generateInitializer(relationships, initTplVars);
 
   const fileName = FileHelper.join(outputDir, 'index.ts');

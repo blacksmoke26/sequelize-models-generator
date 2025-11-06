@@ -55,7 +55,7 @@ export const writeBaseFiles = (baseDir: string, mainDir: string): void => {
   renderOut('repo-base', FileHelper.join(baseDir, 'base/RepositoryBase.ts'));
 
   // Generate instance.ts from template
-  renderOut('instance-template', FileHelper.join(baseDir, 'instance.ts'));
+  renderOut('instance-template', FileHelper.join(baseDir, 'instance.ts'), {dirname: mainDir});
 
   // Generate config.js from template
   renderOut('core/sequelize-config', FileHelper.join(baseDir, 'config/config.js'));
@@ -64,7 +64,11 @@ export const writeBaseFiles = (baseDir: string, mainDir: string): void => {
 
   // Generate ModelBase.ts from template
   renderOut('core/env', FileHelper.join(rootPath, '.env'));
+  renderOut('core/tsconfig.json', FileHelper.join(rootPath, 'tsconfig.json'));
   renderOut('core/sequelize-rc', FileHelper.join(rootPath, '.sequelizerc'), {dirname: mainDir});
+  renderOut('core/package.json', FileHelper.join(rootPath, 'package.json'));
+  renderOut('core/gitignore', FileHelper.join(rootPath, '.gitignore'));
+  renderOut('core/readme', FileHelper.join(rootPath, 'README.md'));
 };
 
 /**
@@ -75,9 +79,14 @@ export const writeBaseFiles = (baseDir: string, mainDir: string): void => {
  *
  * @param {string} baseDir - The base directory path where the repositories folder is located.
  * @param {string} modelName - The name of the model to generate the repository for.
+ * @param {string} mainDir - The main directory name files placed in.
  */
-export const writeRepoFile = (baseDir: string, modelName: string): void => {
+export const writeRepoFile = (baseDir: string, modelName: string, mainDir: string): void => {
   const fileName = FileHelper.join(baseDir, 'repositories', `${modelName}Repository.ts`);
-  renderOut('repo-template', fileName, {modelName});
+  renderOut('repo-template', fileName, {modelName, dirname: mainDir});
   console.log('Repository generated:', fileName);
 };
+
+export const writeServerFile = ( baseDir: string, modelName: string, mainDir: string ) => {
+  renderOut('core/server', FileHelper.join(baseDir, `server.ts`), {model: modelName, dirname: mainDir});
+}
