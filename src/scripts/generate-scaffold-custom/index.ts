@@ -55,7 +55,7 @@ async function run(): Promise<void> {
 
   const DIR_NAME: string = 'database';
 
-  const baseDir = FileHelper.rootPath(`dist/custom-scaffold/${DIR_NAME}`);
+  const baseDir = FileHelper.rootPath(`dist/custom-scaffold/src/${DIR_NAME}`);
   const outputDir = path.normalize(`${baseDir}/models`);
 
   console.log('Cleaning up target directory...');
@@ -66,6 +66,7 @@ async function run(): Promise<void> {
   fsx.emptydirSync(FileHelper.join(baseDir, 'diagrams'));
   fsx.emptydirSync(FileHelper.join(baseDir, 'repositories'));
   fsx.emptydirSync(FileHelper.join(baseDir, 'migrations'));
+  fsx.emptydirSync(FileHelper.join(baseDir, 'seeders'));
   console.log('Target directories cleaned!');
 
   console.log('Fetching database information...');
