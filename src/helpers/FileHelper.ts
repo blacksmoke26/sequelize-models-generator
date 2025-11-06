@@ -93,4 +93,25 @@ export default abstract class FileHelper {
   public static rootPath(...dir: string[]): string {
     return path.normalize(path.join(__dirname, '..', '..', ...dir));
   }
+
+  /**
+   * Gets the parent directory path of the given directory, optionally multiple levels up.
+   * @param dir The starting directory path.
+   * @param depth The number of parent directories to traverse up. Default is 1.
+   * @returns The path of the parent directory at the specified depth.
+   * @example
+   * ```typescript
+   * const parentDir = FileHelper.dirname('/home/user/project', 1);
+   * console.log(parentDir); // Output: '/home/user'
+   * ```
+   */
+  public static dirname(dir: string, depth: number = 1): string {
+    let newDir = dir;
+
+    for (let i = 0; i < depth; i++) {
+      newDir = path.dirname(newDir);
+    }
+
+    return newDir;
+  }
 }

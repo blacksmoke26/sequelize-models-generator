@@ -49,24 +49,22 @@ export const writeDiagrams = async (outputDir: string): Promise<void> => {
  */
 export const writeBaseFiles = (baseDir: string, mainDir: string): void => {
   // Generate ModelBase.ts from template
-  const fileName = FileHelper.join(baseDir, 'base/ModelBase.ts');
-  renderOut('model-base', fileName);
-  console.log('Generated ModelBase:', fileName);
+  renderOut('model-base', FileHelper.join(baseDir, 'base/ModelBase.ts'));
 
   // Generate RepositoryBase.ts from template
-  const rbFileName = FileHelper.join(baseDir, 'base/RepositoryBase.ts');
-  renderOut('repo-base', rbFileName);
-  console.log('Generated RepositoryBase:', rbFileName);
+  renderOut('repo-base', FileHelper.join(baseDir, 'base/RepositoryBase.ts'));
 
   // Generate instance.ts from template
-  const insFileName = FileHelper.join(baseDir, 'instance.ts');
-  renderOut('instance-template', insFileName);
-  console.log('Generated instance file:', insFileName);
+  renderOut('instance-template', FileHelper.join(baseDir, 'instance.ts'));
+
+  // Generate config.js from template
+  renderOut('core/sequelize-config', FileHelper.join(baseDir, 'config/config.js'));
+
+  const rootPath = FileHelper.dirname(baseDir, 2);
 
   // Generate ModelBase.ts from template
-  renderOut('core/env', FileHelper.join(path.dirname(baseDir), '.env'));
-  renderOut('core/sequelize-rc', FileHelper.join(path.dirname(baseDir), '.sequelizerc'), {dirname: mainDir});
-  renderOut('core/sequelize-config', FileHelper.join(baseDir, 'config/config.js'));
+  renderOut('core/env', FileHelper.join(rootPath, '.env'));
+  renderOut('core/sequelize-rc', FileHelper.join(rootPath, '.sequelizerc'), {dirname: mainDir});
 };
 
 /**
