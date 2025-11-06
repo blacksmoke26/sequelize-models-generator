@@ -58,11 +58,6 @@ export const writeBaseFiles = (baseDir: string, mainDir: string): void => {
   renderOut('repo-base', rbFileName);
   console.log('Generated RepositoryBase:', rbFileName);
 
-  // Generate configuration.ts from template
-  const cfgFileName = FileHelper.join(baseDir, 'configuration.ts');
-  renderOut('config-template', cfgFileName);
-  console.log('Generated configuration file:', cfgFileName);
-
   // Generate instance.ts from template
   const insFileName = FileHelper.join(baseDir, 'instance.ts');
   renderOut('instance-template', insFileName);
