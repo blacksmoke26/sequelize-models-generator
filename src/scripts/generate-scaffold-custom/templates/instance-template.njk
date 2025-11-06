@@ -1,9 +1,12 @@
 import { Sequelize, type Options } from 'sequelize';
 
 // config
-import configuration from './configuration';
+import configs from './config/config';
 
 export type SequelizeInstance = InstanceType<typeof Sequelize>;
+
+const env = process.env.NODE_ENV || 'development'
+const config = (configs as {[key: string]: Options})[env]
 
 let sequelizeInstance: SequelizeInstance;
 
@@ -13,7 +16,7 @@ let sequelizeInstance: SequelizeInstance;
  */
 export const newInstance = (options: Partial<Options> = {}): SequelizeInstance => {
   const instance = new Sequelize({
-    ...configuration,
+    ...config,
     dialect: 'postgres',
     logging: console.log,
     ...options,
