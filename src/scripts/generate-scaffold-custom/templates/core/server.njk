@@ -1,0 +1,26 @@
+import http from 'http';
+
+// db
+import { {{ model }} } from '~/{{ dirname }}/models';
+
+async function run() {
+  const records = await {{ model }}.findAll({
+    raw: true,
+    limit: 1,
+  });
+
+  const hostname = process.env.HOSTNAME || '127.0.0.1';
+  const port = parseInt(process.env.PORT || '3000');
+
+  const server = http.createServer((_req, res) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({data: records}));
+  });
+
+  server.listen(port, hostname, () => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+  });
+}
+
+run();

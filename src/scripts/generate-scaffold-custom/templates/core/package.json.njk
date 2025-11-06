@@ -1,0 +1,36 @@
+{
+  "name": "sequelize-app",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/server.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:up": "echo creating && npm run db:create && echo created && npm run db:migrate && echo migrated",
+    "db:reset": "npm run db:drop && npm run db:up",
+    "db:create": "sequelize db:create",
+    "db:drop": "[[ $NODE_ENV == production ]] && exit 1 || sequelize db:drop",
+    "db:migrate": "sequelize db:migrate",
+    "db:rollback": "sequelize db:migrate:undo",
+    "db:rollback:all": "sequelize db:migrate:undo:all",
+    "build": "tsc && tsc-alias",
+    "start": "node ./dist/server.js",
+    "dev": "ts-node -r tsconfig-paths/register src/server.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "pg": "^8.16.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "sequelize-cli": "^6.6.3",
+    "tsc-alias": "^1.8.16",
+    "tsc-watch": "^7.2.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3"
+  }
+}
