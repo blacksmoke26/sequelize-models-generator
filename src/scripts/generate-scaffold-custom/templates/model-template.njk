@@ -1,9 +1,9 @@
 import Sequelize, { DataTypes{{ imports }} } from 'sequelize';
 
-import { getInstance } from '../instance';
+import { getInstance } from '~/{{ dirname }}/instance';
 
 // base
-import ModelBase from '../base/ModelBase';{{ modelsImport }}
+import ModelBase from '~/{{ dirname }}/base/ModelBase';{{ modelsImport }}
 
 /** Type representing an instance of the {{ modelName }} model. */
 export type {{ modelName }}Instance = InstanceType<typeof {{ modelName }}>;

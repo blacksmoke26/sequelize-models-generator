@@ -1,11 +1,11 @@
 import { Sequelize, type Options } from 'sequelize';
 
 // config
-import configs from './config/config';
+import configs from '~/{{ dirname }}/config/config';
 
 export type SequelizeInstance = InstanceType<typeof Sequelize>;
 
-const env = process.env.NODE_ENV || 'development'
+const env = process?.env?.NODE_ENV ?? 'development'
 const config = (configs as {[key: string]: Options})[env]
 
 let sequelizeInstance: SequelizeInstance;
