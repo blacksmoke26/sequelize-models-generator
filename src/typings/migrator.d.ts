@@ -5,6 +5,7 @@
  */
 
 import { TriggerEvent, TriggerTiming, ViewType } from '~/classes/DbMigrator';
+import { generateComposites } from '~/scripts/generate-scaffold-custom/libs/migration.lib';
 
 /**
  * Interface representing a database view.
@@ -91,5 +92,12 @@ export interface DbTrigger {
   /** Whether this is a constraint trigger */
   isConstraintTrigger: boolean;
   /** SQL definition of the trigger */
+  definition: string;
+}
+
+export interface DbComposite {
+  schema: string;
+  name: string;
+  params: string;
   definition: string;
 }

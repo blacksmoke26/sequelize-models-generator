@@ -183,6 +183,38 @@ export const generateTriggers = async (knex: Knex, schemas: readonly string[], o
 };
 
 /**
+ * Generates migration files for database composites
+ * @param knex - Knex instance
+ * @param schemas - Array of schema names to process
+ * @param outputDir - Directory to output migration files
+ */
+export const generateComposites = async (knex: Knex, schemas: readonly string[], outputDir: string): Promise<void> => {
+  const list = await DbMigrator.getComposites(knex);
+
+  for (const data of list) {
+    let sql = data.definition;
+    schemas.forEach((x) => {
+      sql = sql.replaceAll(`${x}.`, '');
+    });
+
+    const vars = initVariables();
+    vars.up += sp(4, `await queryInterface.sequelize.query(\`\n`);
+    vars.up += sp(0, formatSQL(sql) + `\n`);
+    vars.up += sp(4, '`);');
+
+    vars.down += sp(4, `await queryInterface.sequelize.query(\`\n`);
+    vars.down += sp(6, `DROP TYPE %s\n`, data.name);
+    vars.down += sp(4, `\`);`);
+
+    const fileName = createFilename(outputDir, `create_${data.schema}_${data.name}_composite`);
+    createFile(fileName, vars);
+    console.log('Generated composite migration:', fileName);
+  }
+
+  await sleep(1000);
+};
+
+/**
  * Generates migration files for database views
  * @param knex - Knex instance
  * @param schemas - Array of schema names to process

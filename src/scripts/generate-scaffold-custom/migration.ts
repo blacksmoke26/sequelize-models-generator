@@ -14,6 +14,7 @@ import TableColumns from '~/classes/TableColumns';
 import {
   createFile,
   createFilename,
+  generateComposites,
   generateCreateIndexes,
   generateDomains,
   generateForeignKeys,
@@ -68,37 +69,49 @@ export default async function generateMigrations({
   foreignKeys: ForeignKey[];
   outputDir: string;
 }): Promise<void> {
+  // Clean up the migrations directory to ensure a fresh start
   console.log('Cleaning up migrations directory...');
   fsx.emptydirSync(outputDir);
 
+  // Generate migrations for database-level objects: functions, composites, domains, and triggers
   await generateFunctions(knex, schemas, outputDir);
+  await generateComposites(knex, schemas, outputDir);
   await generateDomains(knex, schemas, outputDir);
   await generateTriggers(knex, schemas, outputDir);
 
+  // Process each schema and generate migrations for its tables
   for await (const schemaName of schemas) {
     const schemaTables = await DbUtils.getTables(knex, schemaName);
 
+    // For each table in the schema, generate its migration file
     for await (const tableName of schemaTables) {
+      // Filter indexes and foreign keys specific to this table
       const tableIndexes = indexes.filter((x) => x.table === tableName && x.schema === schemaName);
       const tableForeignKeys = foreignKeys.filter((x) => x.tableName === tableName && x.schema === schemaName);
 
+      // Get column information for the table
       const columnsInfo = await TableColumns.list(knex, tableName, schemaName);
       const variables = initVariables();
 
+      // Generate the main table structure, indexes, and related constraints
       await generateTableInfo({ tableName, columnsInfo, schemaName, tableForeignKeys }, variables);
       generateCreateIndexes(tableIndexes, tableName, schemaName, variables);
       generateRemoveIndexes(tableIndexes, variables);
 
+      // Create and save the migration file for this table
       const fileName = createFilename(outputDir, `create_${schemaName}_${tableName}_table`);
       console.log('Generated table migration:', fileName);
       createFile(fileName, variables);
     }
   }
 
+  // Pause briefly to ensure all file operations complete
   await sleep(1000);
 
+  // Generate migrations for database views
   await generateViews(knex, schemas, outputDir);
 
+  // Generate a separate migration for all foreign key constraints
   const fkVars = initVariables();
   generateForeignKeys(foreignKeys, fkVars);
   const fileName = createFilename(outputDir, `create_create-foreign-keys`);

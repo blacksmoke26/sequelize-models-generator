@@ -11,7 +11,8 @@ import FileHelper from '~/helpers/FileHelper';
 
 // types
 import type { Knex } from 'knex';
-import type { DbDomain, DbFunction, DbTrigger, DbView } from '~/typings/migrator';
+import { DbComposite, DbDomain, DbFunction, DbTrigger, DbView } from '~/typings/migrator';
+import { generateComposites } from '~/scripts/generate-scaffold-custom/libs/migration.lib';
 
 /**
  * Enum representing the types of database views.
@@ -307,6 +308,54 @@ export default abstract class DbMigrator {
               isConstraintTrigger: x.isConstraintTrigger,
               definition: x.definition.trim(),
             }) satisfies DbTrigger,
+        );
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Retrieves a list of database composites from the database.
+   * @param knex - Knex instance for database connection
+   * @param schemaName - Optional schema name to filter composites (defaults to null)
+   * @returns Promise resolving to an array of database composite information
+   * @example
+   * ```typescript
+   * // Get all composites in the public schema
+   * const composites = await DbMigrator.getComposites(knex, 'public');
+   * console.log(composites);
+   *
+   * // Get all composites across all schemas
+   * const allComposites = await DbMigrator.getComposites(knex);
+   * console.log(allComposites);
+   * ```
+   */
+  public static async getComposites(knex: Knex, schemaName: string | null = null): Promise<DbComposite[]> {
+    const query = FileHelper.readSqlFile('migrator/database-composites.sql');
+
+    try {
+      const { rows = [] } = await knex.raw<{
+        rows: DbComposite[];
+      }>(query);
+
+      return rows
+        .filter((x) => {
+          let isSchema: boolean = true;
+
+          if (schemaName) {
+            isSchema = x.schema === schemaName;
+          }
+
+          return isSchema;
+        })
+        .map(
+          (x) =>
+            ({
+              schema: x.schema,
+              name: x.name,
+              params: x.params,
+              definition: x.definition.trim(),
+            }) satisfies DbComposite,
         );
     } catch {
       return [];
