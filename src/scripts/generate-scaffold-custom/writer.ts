@@ -9,6 +9,7 @@ import FileHelper from '~/helpers/FileHelper';
 import NunjucksHelper from '~/helpers/NunjucksHelper';
 import EnvHelper from '~/helpers/EnvHelper';
 import exportDbmlDiagram from '~/scripts/generate-scaffold-custom/dbml';
+import path from 'node:path';
 
 /**
  * Renders a Nunjucks template and saves the output to a file.
@@ -43,9 +44,10 @@ export const writeDiagrams = async (outputDir: string): Promise<void> => {
 /**
  * Writes base files required for the scaffold generation.
  * @param {string} baseDir - The base directory path where the repositories folder is located.
+ * @param {string} mainDir - The main directory name files placed in.
  * This includes ModelBase, RepositoryBase, configuration, and instance files.
  */
-export const writeBaseFiles = (baseDir: string): void => {
+export const writeBaseFiles = (baseDir: string, mainDir: string): void => {
   // Generate ModelBase.ts from template
   const fileName = FileHelper.join(baseDir, 'base/ModelBase.ts');
   renderOut('model-base', fileName);
@@ -65,6 +67,11 @@ export const writeBaseFiles = (baseDir: string): void => {
   const insFileName = FileHelper.join(baseDir, 'instance.ts');
   renderOut('instance-template', insFileName);
   console.log('Generated instance file:', insFileName);
+
+  // Generate ModelBase.ts from template
+  renderOut('core/env', FileHelper.join(path.dirname(baseDir), '.env'));
+  renderOut('core/sequelize-rc', FileHelper.join(path.dirname(baseDir), '.sequelizerc'), {dirname: mainDir});
+  renderOut('core/sequelize-config', FileHelper.join(baseDir, 'config/config.js'));
 };
 
 /**

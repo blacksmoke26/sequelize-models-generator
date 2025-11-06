@@ -53,13 +53,16 @@ async function run(): Promise<void> {
   // 1️⃣ Configure Knex
   const knex = KnexClient.create();
 
-  const baseDir = FileHelper.rootPath('dist/custom-scaffold/database');
+  const DIR_NAME: string = 'database';
+
+  const baseDir = FileHelper.rootPath(`dist/custom-scaffold/${DIR_NAME}`);
   const outputDir = path.normalize(`${baseDir}/models`);
 
   console.log('Cleaning up target directory...');
   fsx.emptydirSync(baseDir);
   fsx.emptydirSync(outputDir);
   fsx.emptydirSync(FileHelper.join(baseDir, 'base'));
+  fsx.emptydirSync(FileHelper.join(baseDir, 'config'));
   fsx.emptydirSync(FileHelper.join(baseDir, 'diagrams'));
   fsx.emptydirSync(FileHelper.join(baseDir, 'repositories'));
   fsx.emptydirSync(FileHelper.join(baseDir, 'migrations'));
@@ -71,7 +74,7 @@ async function run(): Promise<void> {
   const relationships = await DbUtils.getRelationships(knex);
   const foreignKeys = await DbUtils.getForeignKeys(knex);
 
-  writeBaseFiles(baseDir);
+  writeBaseFiles(baseDir, DIR_NAME);
 
   const initTplVars = getInitializerTemplateVars();
 
