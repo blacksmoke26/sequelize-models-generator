@@ -1,0 +1,39 @@
+/**
+ * Initializes the database connection.
+ *
+ * Commonly used in the `index.js` file due to the `sequelize` dependency.
+ */
+
+const process = require('process');
+const { resolve } = require('path');
+
+require('dotenv').config({
+  path: resolve(__dirname, '../../../.env'),
+});
+
+module.exports = {
+  development: {
+    dialect: 'postgres',
+    database: process.env.DATABASE_NAME || 'public',
+    username: process.env.DATABASE_USERNAME || 'postgres',
+    password: process.env.DATABASE_PASSWORD || 'postgres',
+    host: process.env.DATABASE_HOST || 'localhost',
+    port: parseInt(process.env.DATABASE_PORT || '5432'),
+  },
+  test: {
+    dialect: 'postgres',
+    database: process.env.DATABASE_NAME || 'public',
+    username: process.env.DATABASE_USERNAME || 'postgres',
+    password: process.env.DATABASE_PASSWORD || 'postgres',
+    host: process.env.DATABASE_HOST || 'localhost',
+    port: parseInt(process.env.DATABASE_PORT || '5432'),
+  },
+  production: {
+    dialect: 'postgres',
+    database: process.env.DATABASE_NAME,
+    username: process.env.DATABASE_USERNAME,
+    password: process.env.DATABASE_PASSWORD,
+    host: process.env.DATABASE_HOST,
+    port: parseInt(process.env.DATABASE_PORT),
+  },
+};
