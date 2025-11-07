@@ -16,6 +16,7 @@ import ExclusiveTableInfoUtils from '~/classes/ExclusiveTableInfoUtils';
 import SequelizeParser from '~/parsers/SequelizeParser';
 import DefaultValueParser from '~/parsers/DefaultValueParser';
 import TypeScriptTypeParser from '~/parsers/TypeScriptTypeParser';
+import DataUtils from '~/classes/DataUtils';
 
 /**
  * Interface representing detailed column information for database tables
@@ -101,6 +102,11 @@ export default abstract class TableColumns {
 
       const defaultValue = DefaultValueParser.parse(sequelizeType, columnInfo) as string;
 
+      let jsonbDataType = defaultValue;
+      if (sequelizeType === 'JSONB' && jsonbDataType === '{}') {
+        jsonbDataType = await DataUtils.getLongestJson(knex, { schemaName, tableName, columnName: column.name });
+      }
+
       columnInfos.push({
         table: info.table_name,
         name,
@@ -118,12 +124,14 @@ export default abstract class TableColumns {
           sequelizeType,
           sequelizeTypeParams,
         }),
-        tsInterface: defaultValue ? TypeScriptTypeParser.jsonToInterface({
-          columnType: columnType,
-          columnName: name,
-          tableName,
-          defaultValue,
-        }) : null,
+        tsInterface: jsonbDataType?.trim?.()
+          ? TypeScriptTypeParser.jsonToInterface({
+              columnType: columnType,
+              columnName: name,
+              tableName,
+              defaultValue: jsonbDataType,
+            })
+          : null,
         flags: {
           nullable: column.nullable,
           primary: ExclusiveTableInfoUtils.isPrimaryKey(columnInfo),
