@@ -151,6 +151,22 @@ export const generateDomains = async (knex: Knex, schemas: readonly string[], ou
 };
 
 /**
+ * Generates migration files for database domains
+ * @param indexes - Array of tables indexes to process
+ * @param outputDir - Directory to output migration files
+ */
+export const generateIndexes = async (indexes: TableIndex[], outputDir: string): Promise<void> => {
+  const vars = initVariables();
+  generateCreateIndexes(indexes, vars);
+  generateRemoveIndexes(indexes, vars)
+
+  const fileName = createFilename(outputDir, `create_indexes`);
+  createFile(fileName, vars);
+  console.log('Generated indexes migration:', fileName);
+  await sleep(1000);
+};
+
+/**
  * Generates migration files for database triggers
  * @param knex - Knex instance
  * @param schemas - Array of schema names to process
@@ -288,7 +304,7 @@ export const generateTableInfo = async (
       vars.up += sp(8, `type: '%s', // PostgreSQL's Domain Type.\n`, sequelizeType);
     } else if (sequelizeType.startsWith('$COMMENT')) {
       const [ty, cm] = sequelizeType.replace('$COMMENT.', '').split('|');
-      vars.up += sp(8, `type: DataTypes.%s, // %s\n`, ty, cm);
+      vars.up += sp(8, `type: Sequelize.%s, // %s\n`, ty, cm);
     } else if (sequelizeType.startsWith('$RAW')) {
       const [x, y] = sequelizeType.replace('$RAW.', '').split('|');
       sequelizeType = x;
@@ -336,7 +352,7 @@ export const generateTableInfo = async (
  * @param schemaName - Schema name
  * @param vars - Migration variables object to update
  */
-export const generateCreateIndexes = (tableIndexes: TableIndex[], tableName: string, schemaName: string, vars: { up: string; down: string }) => {
+export const generateCreateIndexes = (tableIndexes: TableIndex[], vars: { up: string; down: string }) => {
   if (!tableIndexes.length) {
     return;
   }
@@ -353,8 +369,8 @@ export const generateCreateIndexes = (tableIndexes: TableIndex[], tableName: str
     indexedTextBytes += sp(
       4,
       `await queryInterface.addIndex({ schema: '%s', tableName: '%s' }, [%s], {\n`,
-      schemaName,
-      tableName,
+      tableIndex.schema,
+      tableIndex.table,
       tableIndex.columns.map((x) => `'${x}'`).join(', '),
     );
 
