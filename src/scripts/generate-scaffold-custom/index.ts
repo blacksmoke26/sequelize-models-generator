@@ -16,6 +16,7 @@ import fsx from 'fs-extra';
 import moment from 'moment';
 import figlet from 'figlet';
 import { pascal } from 'case';
+import { rimraf } from 'rimraf';
 
 // classes
 import DbUtils from '~/classes/DbUtils';
@@ -55,21 +56,22 @@ async function run(): Promise<void> {
 
   const DIR_NAME: string = 'database';
 
+  console.log('Removing leftovers...');
   const ROOT_DIR = FileHelper.rootPath(`dist/custom-scaffold`);
+  await rimraf(ROOT_DIR);
 
   const baseDir = FileHelper.join(ROOT_DIR, `src/${DIR_NAME}`);
   const outputDir = path.normalize(`${baseDir}/models`);
 
-  // Clean directories
-  fsx.emptydirSync(ROOT_DIR);
-  fsx.emptydirSync(baseDir);
-  fsx.emptydirSync(outputDir);
-  fsx.emptydirSync(FileHelper.join(baseDir, 'base'));
-  fsx.emptydirSync(FileHelper.join(baseDir, 'config'));
-  fsx.emptydirSync(FileHelper.join(baseDir, 'diagrams'));
-  fsx.emptydirSync(FileHelper.join(baseDir, 'repositories'));
-  fsx.emptydirSync(FileHelper.join(baseDir, 'migrations'));
-  fsx.emptydirSync(FileHelper.join(baseDir, 'seeders'));
+  console.log('Creating directories...');
+  fsx.mkdirSync(baseDir, { recursive: true });
+  fsx.mkdirSync(outputDir);
+  fsx.mkdirSync(FileHelper.join(baseDir, 'base'));
+  fsx.mkdirSync(FileHelper.join(baseDir, 'config'));
+  fsx.mkdirSync(FileHelper.join(baseDir, 'diagrams'));
+  fsx.mkdirSync(FileHelper.join(baseDir, 'repositories'));
+  fsx.mkdirSync(FileHelper.join(baseDir, 'migrations'));
+  fsx.mkdirSync(FileHelper.join(baseDir, 'seeders'));
 
   const migrationConfig: MigrationConfig = {
     timestamp: moment().toDate(),
@@ -82,11 +84,13 @@ async function run(): Promise<void> {
     rootDir: ROOT_DIR,
   };
 
-  // Fetch database schema
-  const schemas = await DbUtils.getSchemas(knex);
-  const indexes = await DbUtils.getIndexes(knex);
-  const relationships = await DbUtils.getRelationships(knex);
-  const foreignKeys = await DbUtils.getForeignKeys(knex);
+  console.log('Fetching database information...');
+  const [schemas, indexes, relationships, foreignKeys] = await Promise.all([
+    DbUtils.getSchemas(knex),
+    DbUtils.getIndexes(knex),
+    DbUtils.getRelationships(knex),
+    DbUtils.getForeignKeys(knex),
+  ]);
 
   let anyModelName: string = undefined;
 
