@@ -63,7 +63,7 @@ export const writeBaseFiles = (baseDir: string, mainDir: string): void => {
   const rootPath = FileHelper.dirname(baseDir, 2);
 
   // Generate ModelBase.ts from template
-  renderOut('core/env', FileHelper.join(rootPath, '.env'));
+  renderOut('core/env', FileHelper.join(rootPath, '.env'), EnvHelper.getDbConfig());
   renderOut('core/tsconfig.json', FileHelper.join(rootPath, 'tsconfig.json'));
   renderOut('core/sequelize-rc', FileHelper.join(rootPath, '.sequelizerc'), {dirname: mainDir});
   renderOut('core/package.json', FileHelper.join(rootPath, 'package.json'));
