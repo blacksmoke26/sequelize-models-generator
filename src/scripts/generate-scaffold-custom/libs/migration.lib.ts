@@ -44,7 +44,7 @@ export const formatSQL = (sql: string): string => {
     linesBetweenQueries: 2,
     useTabs: false,
   }).replace(/^./gim, (s) => {
-    return sp(6) + s;
+    return sp(4) + s;
   });
 };
 
@@ -99,13 +99,13 @@ export const generateFunctions = async (knex: Knex, schemas: readonly string[], 
     });
 
     const vars = initVariables();
-    vars.up += sp(4, `await queryInterface.sequelize.query(\`\n`);
+    vars.up += sp(2, `await queryInterface.sequelize.query(\`\n`);
     vars.up += sp(0, formatSQL(sql) + `\n`);
-    vars.up += sp(4, '`);');
+    vars.up += sp(2, '`);');
 
-    vars.down += sp(4, `await queryInterface.sequelize.query(\`\n`);
-    vars.down += sp(6, `DROP FUNCTION %s\n`, data.name);
-    vars.down += sp(4, `\`);`);
+    vars.down += sp(2, `await queryInterface.sequelize.query(\`\n`);
+    vars.down += sp(4, `DROP FUNCTION %s\n`, data.name);
+    vars.down += sp(2, `\`);`);
 
     const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_function`, config.getTime());
     createFile(fileName, vars);
@@ -129,13 +129,13 @@ export const generateDomains = async (knex: Knex, schemas: readonly string[], co
     });
 
     const vars = initVariables();
-    vars.up += sp(4, `await queryInterface.sequelize.query(\`\n`);
+    vars.up += sp(2, `await queryInterface.sequelize.query(\`\n`);
     vars.up += sp(0, formatSQL(sql) + `\n`);
-    vars.up += sp(4, '`);');
+    vars.up += sp(2, '`);');
 
-    vars.down += sp(4, `await queryInterface.sequelize.query(\`\n`);
-    vars.down += sp(6, `DROP DOMAIN %s\n`, data.name);
-    vars.down += sp(4, `\`);`);
+    vars.down += sp(2, `await queryInterface.sequelize.query(\`\n`);
+    vars.down += sp(4, `DROP DOMAIN %s\n`, data.name);
+    vars.down += sp(2, `\`);`);
 
     const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_domain`, config.getTime());
     createFile(fileName, vars);
@@ -175,13 +175,13 @@ export const generateTriggers = async (knex: Knex, schemas: readonly string[], c
     });
 
     const vars = initVariables();
-    vars.up += sp(4, `await queryInterface.sequelize.query(\`\n`);
+    vars.up += sp(2, `await queryInterface.sequelize.query(\`\n`);
     vars.up += sp(0, formatSQL(sql) + `\n`);
-    vars.up += sp(4, '`);');
+    vars.up += sp(2, '`);');
 
-    vars.down += sp(4, `await queryInterface.sequelize.query(\`\n`);
-    vars.down += sp(6, `DROP TRIGGER %s\n`, data.name);
-    vars.down += sp(4, `\`);`);
+    vars.down += sp(2, `await queryInterface.sequelize.query(\`\n`);
+    vars.down += sp(4, `DROP TRIGGER %s\n`, data.name);
+    vars.down += sp(2, `\`);`);
 
     const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_trigger`, config.getTime());
     createFile(fileName, vars);
@@ -205,13 +205,13 @@ export const generateComposites = async (knex: Knex, schemas: readonly string[],
     });
 
     const vars = initVariables();
-    vars.up += sp(4, `await queryInterface.sequelize.query(\`\n`);
+    vars.up += sp(2, `await queryInterface.sequelize.query(\`\n`);
     vars.up += sp(0, formatSQL(sql) + `\n`);
-    vars.up += sp(4, '`);');
+    vars.up += sp(2, '`);');
 
-    vars.down += sp(4, `await queryInterface.sequelize.query(\`\n`);
-    vars.down += sp(6, `DROP TYPE %s\n`, data.name);
-    vars.down += sp(4, `\`);`);
+    vars.down += sp(2, `await queryInterface.sequelize.query(\`\n`);
+    vars.down += sp(4, `DROP TYPE %s\n`, data.name);
+    vars.down += sp(2, `\`);`);
 
     const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_composite`, config.getTime());
     createFile(fileName, vars);
@@ -235,13 +235,13 @@ export const generateViews = async (knex: Knex, schemas: readonly string[], conf
     });
 
     const vars = initVariables();
-    vars.up += sp(4, `await queryInterface.sequelize.query(\`\n`);
+    vars.up += sp(2, `await queryInterface.sequelize.query(\`\n`);
     vars.up += sp(0, formatSQL(`CREATE OR REPLACE VIEW ${data.name} AS ${sql}`) + `\n`);
-    vars.up += sp(4, '`);');
+    vars.up += sp(2, '`);');
 
-    vars.down += sp(4, `await queryInterface.sequelize.query(\`\n`);
-    vars.down += sp(6, `DROP VIEW %s\n`, data.name);
-    vars.down += sp(4, `\`);`);
+    vars.down += sp(2, `await queryInterface.sequelize.query(\`\n`);
+    vars.down += sp(4, `DROP VIEW %s\n`, data.name);
+    vars.down += sp(2, `\`);`);
 
     const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_view`, config.getTime());
     createFile(fileName, vars);
@@ -261,75 +261,75 @@ export const generateTableInfo = async (
 ) => {
   const { tableName, columnsInfo, schemaName, tableForeignKeys } = params;
 
-  vars.up += sp(4, `await queryInterface.createTable({ schema: '%s', tableName: '%s' }, {\n`, schemaName, tableName);
-  vars.down += sp(4, `// drop '%s' table\n`, tableName);
-  vars.down += sp(4, `await queryInterface.dropTable({ schema: '%s', tableName: '%s' });\n`, schemaName, tableName);
+  vars.up += sp(2, `await queryInterface.createTable({ schema: '%s', tableName: '%s' }, {\n`, schemaName, tableName);
+  vars.down += sp(2, `// drop '%s' table\n`, tableName);
+  vars.down += sp(2, `await queryInterface.dropTable({ schema: '%s', tableName: '%s' });\n`, schemaName, tableName);
 
   for await (const columnInfo of columnsInfo) {
     const foreignKey = tableForeignKeys.find((x) => x.columnName === columnInfo.name) ?? null;
 
-    vars.up += sp(6, `%s: {\n`, columnInfo.propertyName);
+    vars.up += sp(4, `%s: {\n`, columnInfo.propertyName);
 
     if (columnInfo.propertyName !== columnInfo.name) {
-      vars.up += sp(8, `field: '%s',\n`, columnInfo.name);
+      vars.up += sp(6, `field: '%s',\n`, columnInfo.name);
     }
 
     if (foreignKey) {
-      /*vars.up += sp(8, `references: {\n`);
-      vars.up += sp(10, `model: %s,\n`, StringHelper.tableToModel(foreignKey.referenced.table));
-      vars.up += sp(10, `key: '%s',\n`, StringHelper.toPropertyName(foreignKey.referenced.column));
+      /*vars.up += sp(6, `references: {\n`);
+      vars.up += sp(8, `model: %s,\n`, StringHelper.tableToModel(foreignKey.referenced.table));
+      vars.up += sp(8, `key: '%s',\n`, StringHelper.toPropertyName(foreignKey.referenced.column));
       if (foreignKey.isDeferrable) {
-        vars.up += sp(10, `deferrable: true,\n`);
+        vars.up += sp(8, `deferrable: true,\n`);
       }
-      vars.up += sp(8, `},\n`);*/
+      vars.up += sp(6, `},\n`);*/
     }
 
     let sequelizeType = columnInfo.sequelizeTypeParams;
 
     if (sequelizeType.startsWith('$QUOTE')) {
       sequelizeType = sequelizeType.replace('$QUOTE.', '');
-      vars.up += sp(8, `type: '%s', // PostgreSQL's Domain Type.\n`, sequelizeType);
+      vars.up += sp(6, `type: '%s', // PostgreSQL's Domain Type.\n`, sequelizeType);
     } else if (sequelizeType.startsWith('$COMMENT')) {
       const [ty, cm] = sequelizeType.replace('$COMMENT.', '').split('|');
-      vars.up += sp(8, `type: Sequelize.%s, // %s\n`, ty, cm);
+      vars.up += sp(6, `type: Sequelize.%s, // %s\n`, ty, cm);
     } else if (sequelizeType.startsWith('$RAW')) {
       const [x, y] = sequelizeType.replace('$RAW.', '').split('|');
       sequelizeType = x;
-      vars.up += sp(8, `type: '%s', // %s\n`, sequelizeType, y || "PostgreSQL's Native Custom (Composite) Type.");
+      vars.up += sp(6, `type: '%s', // %s\n`, sequelizeType, y || "PostgreSQL's Native Custom (Composite) Type.");
     } else {
       if (TypeUtils.isArray(columnInfo.type) || TypeUtils.isRange(columnInfo.type)) {
         sequelizeType = sequelizeType.replace('(', '(Sequelize.');
       }
-      vars.up += sp(8, `type: Sequelize.%s,\n`, sequelizeType);
+      vars.up += sp(6, `type: Sequelize.%s,\n`, sequelizeType);
     }
 
     if (columnInfo.flags.primary) {
-      vars.up += sp(8, `primaryKey: true,\n`);
+      vars.up += sp(6, `primaryKey: true,\n`);
     }
 
     if (columnInfo.flags.autoIncrement) {
-      vars.up += sp(8, `autoIncrement: true,\n`);
+      vars.up += sp(6, `autoIncrement: true,\n`);
     }
 
     if (columnInfo.comment) {
-      vars.up += sp(8, `comment: '%s',\n`, columnInfo.comment);
+      vars.up += sp(6, `comment: '%s',\n`, columnInfo.comment);
     }
 
     if (columnInfo.defaultValue) {
       if (!TypeUtils.isDate(columnInfo.type)) {
-        vars.up += sp(8, `defaultValue: %s,\n`, columnInfo.defaultValue);
+        vars.up += sp(6, `defaultValue: %s,\n`, columnInfo.defaultValue);
       } else {
         if (columnInfo.defaultValueRaw?.startsWith?.('CURRENT_')) {
-          vars.up += sp(8, `defaultValue: Sequelize.literal('%s'),\n`, columnInfo.defaultValueRaw);
+          vars.up += sp(6, `defaultValue: Sequelize.literal('%s'),\n`, columnInfo.defaultValueRaw);
         }
       }
     }
 
-    vars.up += sp(8, `allowNull: %s,\n`, String(columnInfo.flags.nullable));
-    vars.up += sp(6, `},\n`);
+    vars.up += sp(6, `allowNull: %s,\n`, String(columnInfo.flags.nullable));
+    vars.up += sp(4, `},\n`);
   }
 
-  vars.up += sp(4, `});\n`);
+  vars.up += sp(2, `});\n`);
 };
 
 /**
@@ -343,33 +343,33 @@ export const generateCreateIndexes = (tableIndexes: TableIndex[], vars: { up: st
   }
 
   vars.up += `\n`;
-  vars.up += sp(4, `// create table indexes\n`);
+  vars.up += sp(2, `// create table indexes\n`);
   for (const tableIndex of tableIndexes) {
     let indexedTextBytes = '';
 
     if (tableIndex.comment) {
-      indexedTextBytes += sp(4, `// ${tableIndex.comment}\n`);
+      indexedTextBytes += sp(2, `// ${tableIndex.comment}\n`);
     }
 
     indexedTextBytes += sp(
-      4,
+      2,
       `await queryInterface.addIndex({ schema: '%s', tableName: '%s' }, [%s], {\n`,
       tableIndex.schema,
       tableIndex.table,
       tableIndex.columns.map((x) => `'${x}'`).join(', '),
     );
 
-    indexedTextBytes += sp(6, `name: '%s',\n`, escape(tableIndex.name));
+    indexedTextBytes += sp(4, `name: '%s',\n`, escape(tableIndex.name));
 
     if (tableIndex.constraint === 'UNIQUE') {
-      indexedTextBytes += sp(6, `unique: true,\n`);
+      indexedTextBytes += sp(4, `unique: true,\n`);
     }
 
     if (tableIndex.type) {
-      indexedTextBytes += sp(6, `using: '%s',\n`, tableIndex.type);
+      indexedTextBytes += sp(4, `using: '%s',\n`, tableIndex.type);
     }
 
-    indexedTextBytes += sp(4, `});\n`);
+    indexedTextBytes += sp(2, `});\n`);
 
     vars.up += indexedTextBytes;
   }
@@ -385,9 +385,9 @@ export const generateRemoveIndexes = (tableIndexes: TableIndex[], vars: { up: st
     return;
   }
 
-  let indexedTextBytes = sp(4, `//  drop %s table indexes\n`, tableIndexes.length);
+  let indexedTextBytes = sp(2, `//  drop %s table indexes\n`, tableIndexes.length);
   for (const tableIndex of tableIndexes) {
-    indexedTextBytes += sp(4, `await queryInterface.removeIndex({ schema: '%s', tableName: '%s' }, '%s');\n`, tableIndex.schema, tableIndex.table, tableIndex.name);
+    indexedTextBytes += sp(2, `await queryInterface.removeIndex({ schema: '%s', tableName: '%s' }, '%s');\n`, tableIndex.schema, tableIndex.table, tableIndex.name);
   }
   vars.down = indexedTextBytes + `\n` + vars.down;
 };
@@ -403,38 +403,38 @@ export const generateForeignKeys = (foreignKeys: ForeignKey[], vars: { up: strin
 
   for (const foreignKey of foreignKeys) {
     if (foreignKey.comment) {
-      vars.up += sp(4, `// %s\n`, foreignKey.comment);
+      vars.up += sp(2, `// %s\n`, foreignKey.comment);
     }
 
-    vars.up += sp(4, `await queryInterface.addConstraint({ schema: '%s', tableName: '%s' }, {\n`, foreignKey.schema, foreignKey.tableName);
-    vars.up += sp(6, `fields: ['%s'],\n`, foreignKey.columnName);
-    vars.up += sp(6, `type: 'foreign key',\n`);
-    vars.up += sp(6, `name: '%s',\n`, foreignKey.constraintName);
+    vars.up += sp(2, `await queryInterface.addConstraint({ schema: '%s', tableName: '%s' }, {\n`, foreignKey.schema, foreignKey.tableName);
+    vars.up += sp(4, `fields: ['%s'],\n`, foreignKey.columnName);
+    vars.up += sp(4, `type: 'foreign key',\n`);
+    vars.up += sp(4, `name: '%s',\n`, foreignKey.constraintName);
 
     if (foreignKey.defaultValue) {
-      vars.up += sp(6, `defaultValue: '%s',\n`, foreignKey.defaultValue);
+      vars.up += sp(4, `defaultValue: '%s',\n`, foreignKey.defaultValue);
     }
-    vars.up += sp(6, `references: {\n`);
-    vars.up += sp(8, `table: '%s',\n`, foreignKey.referenced.table);
-    vars.up += sp(8, `field: '%s',\n`, foreignKey.referenced.column);
-    vars.up += sp(6, `},\n`);
+    vars.up += sp(4, `references: {\n`);
+    vars.up += sp(6, `table: '%s',\n`, foreignKey.referenced.table);
+    vars.up += sp(6, `field: '%s',\n`, foreignKey.referenced.column);
+    vars.up += sp(4, `},\n`);
 
     if (foreignKey.rule.update) {
-      vars.up += sp(6, `onUpdate: '%s',\n`, foreignKey.rule.update);
+      vars.up += sp(4, `onUpdate: '%s',\n`, foreignKey.rule.update);
     }
 
     if (foreignKey.rule.delete) {
-      vars.up += sp(6, `onDelete: '%s',\n`, foreignKey.rule.delete);
+      vars.up += sp(4, `onDelete: '%s',\n`, foreignKey.rule.delete);
     }
 
     if (foreignKey.isDeferrable) {
-      vars.up += sp(6, `deferrable: true',\n`);
+      vars.up += sp(4, `deferrable: true',\n`);
     }
 
-    vars.up += sp(4, `});\n`);
+    vars.up += sp(2, `});\n`);
 
     vars.down += sp(
-      4,
+      2,
       `await queryInterface.removeConstraint({ schema: '%s', tableName: '%s' }, '%s');\n`,
       foreignKey.schema,
       foreignKey.tableName,
