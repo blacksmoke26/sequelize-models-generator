@@ -28,6 +28,8 @@ import {
 // types
 import type { Knex } from 'knex';
 import type { ForeignKey, TableIndex } from '~/typings/utils';
+import FileHelper from '~/helpers/FileHelper';
+import { renderOut } from '~/scripts/generate-scaffold-custom/writer';
 
 /**
  * Configuration interface for migration generation.
@@ -128,4 +130,8 @@ export default async function generateMigrations({
 
   await generateViews(knex, schemas, config);
   await generateTriggers(knex, schemas, config);
+
+  // seeders init
+  const seedFile = createFilename(FileHelper.join(config.outDir, '../seeders'), 'add_init_records', config.getTime())
+  renderOut('seeder-init', seedFile);
 }
