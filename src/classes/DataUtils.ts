@@ -22,13 +22,12 @@ export default abstract class DataUtils {
      * @returns Promise resolving to the longest JSON string as text.
      */
   public static async getLongestJson(knex: Knex, params: { schemaName?: string; tableName: string; columnName: string }): Promise<string> {
-    const [text = null] = await knex
-      .from(`${params?.schemaName ?? 'public'}.${params.tableName}`)
+    const record = await knex(`${params?.schemaName ?? 'public'}.${params.tableName}`)
       .select(knex.raw(`${params.columnName}::TEXT`))
       .orderByRaw(`LENGTH(${params.columnName}::TEXT) DESC`)
       .limit(1)
       .first();
 
-    return text?.trim?.() ?? '{}';
+    return record?.[params.columnName]?.trim?.() ?? '{}';
   }
 }
