@@ -22,13 +22,7 @@ import { renderOut } from '../writer';
 import type { Knex } from 'knex';
 import type { ForeignKey, TableIndex } from '~/typings/utils';
 import type { ColumnInfo } from '~/classes/TableColumns';
-
-/**
- * Creates a promise that resolves after a specified delay
- * @param ms - Delay in milliseconds
- * @returns Promise that resolves after the delay
- */
-export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+import type { MigrationConfig } from '../migration';
 
 /**
  * Escapes single quotes in a string
@@ -69,10 +63,11 @@ export const initVariables = (): { up: string; down: string } => {
  * Creates a migration filename with timestamp
  * @param outDir - Output directory path
  * @param fileName - Base filename
+ * @param timestamp - Optional timestamp to use (defaults to current time)
  * @returns Normalized migration filename with timestamp
  */
-export const createFilename = (outDir: string, fileName: string) => {
-  return path.normalize(`${outDir}/${moment().format('YYYYMMDDHHmmss')}-${snakeCase(fileName)}.js`);
+export const createFilename = (outDir: string, fileName: string, timestamp: number = null) => {
+  return path.normalize(`${outDir}/${timestamp || moment().format('YYYYMMDDHHmmss')}-${snakeCase(fileName)}.js`);
 };
 
 /**
@@ -89,11 +84,12 @@ export const createFile = (fileName: string, variables: { up: string; down: stri
 
 /**
  * Generates migration files for database functions
- * @param knex - Knex instance
- * @param schemas - Array of schema names to process
- * @param outputDir - Directory to output migration files
+ * @param {Knex} knex - Knex instance
+ * @param {readonly string[]} schemas - Array of schema names to process
+ * @param {MigrationConfig} config - Migration configuration object
+ * @returns {Promise<void>}
  */
-export const generateFunctions = async (knex: Knex, schemas: readonly string[], outputDir: string): Promise<void> => {
+export const generateFunctions = async (knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> => {
   const list = await DbMigrator.getFunctions(knex);
 
   for (const data of list) {
@@ -111,20 +107,19 @@ export const generateFunctions = async (knex: Knex, schemas: readonly string[], 
     vars.down += sp(6, `DROP FUNCTION %s\n`, data.name);
     vars.down += sp(4, `\`);`);
 
-    const fileName = createFilename(outputDir, `create_${data.schema}_${data.name}_function`);
+    const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_function`, config.getTime());
     createFile(fileName, vars);
     console.log('Generated function migration:', fileName);
   }
-  await sleep(1000);
 };
 
 /**
  * Generates migration files for database domains
  * @param knex - Knex instance
  * @param schemas - Array of schema names to process
- * @param outputDir - Directory to output migration files
+ * @param {MigrationConfig} config - Migration configuration object
  */
-export const generateDomains = async (knex: Knex, schemas: readonly string[], outputDir: string): Promise<void> => {
+export const generateDomains = async (knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> => {
   const list = await DbMigrator.getDomains(knex);
 
   for (const data of list) {
@@ -142,37 +137,35 @@ export const generateDomains = async (knex: Knex, schemas: readonly string[], ou
     vars.down += sp(6, `DROP DOMAIN %s\n`, data.name);
     vars.down += sp(4, `\`);`);
 
-    const fileName = createFilename(outputDir, `create_${data.schema}_${data.name}_domain`);
+    const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_domain`, config.getTime());
     createFile(fileName, vars);
     console.log('Generated domain migration:', fileName);
   }
-
-  await sleep(1000);
 };
 
 /**
  * Generates migration files for database domains
  * @param indexes - Array of tables indexes to process
- * @param outputDir - Directory to output migration files
+ * @param {MigrationConfig} config - Migration configuration object
  */
-export const generateIndexes = async (indexes: TableIndex[], outputDir: string): Promise<void> => {
+export const generateIndexes = async (indexes: TableIndex[], config: MigrationConfig): Promise<void> => {
+  const filteredIndexes = indexes.filter(x => x.constraint !== 'PRIMARY KEY');
   const vars = initVariables();
-  generateCreateIndexes(indexes, vars);
-  generateRemoveIndexes(indexes, vars)
+  generateCreateIndexes(filteredIndexes, vars);
+  generateRemoveIndexes(filteredIndexes, vars);
 
-  const fileName = createFilename(outputDir, `create_indexes`);
+  const fileName = createFilename(config.outDir, `create_indexes`, config.getTime());
   createFile(fileName, vars);
   console.log('Generated indexes migration:', fileName);
-  await sleep(1000);
 };
 
 /**
  * Generates migration files for database triggers
  * @param knex - Knex instance
  * @param schemas - Array of schema names to process
- * @param outputDir - Directory to output migration files
+ * @param {MigrationConfig} config - Migration configuration object
  */
-export const generateTriggers = async (knex: Knex, schemas: readonly string[], outputDir: string): Promise<void> => {
+export const generateTriggers = async (knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> => {
   const list = await DbMigrator.getTriggers(knex);
 
   for (const data of list) {
@@ -190,21 +183,19 @@ export const generateTriggers = async (knex: Knex, schemas: readonly string[], o
     vars.down += sp(6, `DROP TRIGGER %s\n`, data.name);
     vars.down += sp(4, `\`);`);
 
-    const fileName = createFilename(outputDir, `create_${data.schema}_${data.name}_trigger`);
+    const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_trigger`, config.getTime());
     createFile(fileName, vars);
     console.log('Generated trigger migration:', fileName);
   }
-
-  await sleep(1000);
 };
 
 /**
  * Generates migration files for database composites
  * @param knex - Knex instance
  * @param schemas - Array of schema names to process
- * @param outputDir - Directory to output migration files
+ * @param {MigrationConfig} config - Migration configuration object
  */
-export const generateComposites = async (knex: Knex, schemas: readonly string[], outputDir: string): Promise<void> => {
+export const generateComposites = async (knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> => {
   const list = await DbMigrator.getComposites(knex);
 
   for (const data of list) {
@@ -222,21 +213,19 @@ export const generateComposites = async (knex: Knex, schemas: readonly string[],
     vars.down += sp(6, `DROP TYPE %s\n`, data.name);
     vars.down += sp(4, `\`);`);
 
-    const fileName = createFilename(outputDir, `create_${data.schema}_${data.name}_composite`);
+    const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_composite`, config.getTime());
     createFile(fileName, vars);
     console.log('Generated composite migration:', fileName);
   }
-
-  await sleep(1000);
 };
 
 /**
  * Generates migration files for database views
  * @param knex - Knex instance
  * @param schemas - Array of schema names to process
- * @param outputDir - Directory to output migration files
+ * @param {MigrationConfig} config - Migration configuration object
  */
-export const generateViews = async (knex: Knex, schemas: readonly string[], outputDir: string): Promise<void> => {
+export const generateViews = async (knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> => {
   const list = await DbMigrator.getViews(knex);
 
   for (const data of list) {
@@ -247,19 +236,17 @@ export const generateViews = async (knex: Knex, schemas: readonly string[], outp
 
     const vars = initVariables();
     vars.up += sp(4, `await queryInterface.sequelize.query(\`\n`);
-    vars.up += sp(0, formatSQL('CREATE OR REPLACE VIEW ' + sql) + `\n`);
+    vars.up += sp(0, formatSQL(`CREATE OR REPLACE VIEW ${data.name} AS ${sql}`) + `\n`);
     vars.up += sp(4, '`);');
 
     vars.down += sp(4, `await queryInterface.sequelize.query(\`\n`);
     vars.down += sp(6, `DROP VIEW %s\n`, data.name);
     vars.down += sp(4, `\`);`);
 
-    const fileName = createFilename(outputDir, `create_${data.schema}_${data.name}_view`);
+    const fileName = createFilename(config.outDir, `create_${data.schema}_${data.name}_view`, config.getTime());
     createFile(fileName, vars);
     console.log('Generated view migration:', fileName);
   }
-
-  await sleep(1000);
 };
 
 /**
@@ -348,8 +335,6 @@ export const generateTableInfo = async (
 /**
  * Generates migration code for creating table indexes
  * @param tableIndexes - Array of table index definitions
- * @param tableName - Table name
- * @param schemaName - Schema name
  * @param vars - Migration variables object to update
  */
 export const generateCreateIndexes = (tableIndexes: TableIndex[], vars: { up: string; down: string }) => {
@@ -422,7 +407,7 @@ export const generateForeignKeys = (foreignKeys: ForeignKey[], vars: { up: strin
     }
 
     vars.up += sp(4, `await queryInterface.addConstraint({ schema: '%s', tableName: '%s' }, {\n`, foreignKey.schema, foreignKey.tableName);
-    vars.up += sp(6, `field: ['%s'],\n`, foreignKey.columnName);
+    vars.up += sp(6, `fields: ['%s'],\n`, foreignKey.columnName);
     vars.up += sp(6, `type: 'foreign key',\n`);
     vars.up += sp(6, `name: '%s',\n`, foreignKey.constraintName);
 
