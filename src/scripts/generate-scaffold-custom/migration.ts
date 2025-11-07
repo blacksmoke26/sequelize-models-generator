@@ -15,11 +15,10 @@ import {
   createFile,
   createFilename,
   generateComposites,
-  generateCreateIndexes,
   generateDomains,
   generateForeignKeys,
   generateFunctions,
-  generateRemoveIndexes,
+  generateIndexes,
   generateTableInfo,
   generateTriggers,
   generateViews,
@@ -77,7 +76,6 @@ export default async function generateMigrations({
   await generateFunctions(knex, schemas, outputDir);
   await generateComposites(knex, schemas, outputDir);
   await generateDomains(knex, schemas, outputDir);
-  await generateTriggers(knex, schemas, outputDir);
 
   // Process each schema and generate migrations for its tables
   for await (const schemaName of schemas) {
@@ -86,7 +84,7 @@ export default async function generateMigrations({
     // For each table in the schema, generate its migration file
     for await (const tableName of schemaTables) {
       // Filter indexes and foreign keys specific to this table
-      const tableIndexes = indexes.filter((x) => x.table === tableName && x.schema === schemaName);
+      //const tableIndexes = indexes.filter((x) => x.table === tableName && x.schema === schemaName);
       const tableForeignKeys = foreignKeys.filter((x) => x.tableName === tableName && x.schema === schemaName);
 
       // Get column information for the table
@@ -95,8 +93,8 @@ export default async function generateMigrations({
 
       // Generate the main table structure, indexes, and related constraints
       await generateTableInfo({ tableName, columnsInfo, schemaName, tableForeignKeys }, variables);
-      generateCreateIndexes(tableIndexes, tableName, schemaName, variables);
-      generateRemoveIndexes(tableIndexes, variables);
+      //generateCreateIndexes(tableIndexes, tableName, schemaName, variables);
+      //generateRemoveIndexes(tableIndexes, variables);
 
       // Create and save the migration file for this table
       const fileName = createFilename(outputDir, `create_${schemaName}_${tableName}_table`);
@@ -109,7 +107,9 @@ export default async function generateMigrations({
   await sleep(1000);
 
   // Generate migrations for database views
+  await generateIndexes(indexes, outputDir);
   await generateViews(knex, schemas, outputDir);
+  await generateTriggers(knex, schemas, outputDir);
 
   // Generate a separate migration for all foreign key constraints
   const fkVars = initVariables();
