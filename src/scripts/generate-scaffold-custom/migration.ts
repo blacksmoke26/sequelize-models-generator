@@ -23,12 +23,27 @@ import {
   generateTriggers,
   generateViews,
   initVariables,
-  sleep,
 } from './libs/migration.lib';
 
 // types
 import type { Knex } from 'knex';
 import type { ForeignKey, TableIndex } from '~/typings/utils';
+
+/**
+ * Configuration interface for migration generation.
+ */
+export interface MigrationConfig {
+  /** The directory name where the migration is being processed */
+  dirname: string;
+  /** The output directory where migration files will be generated */
+  outDir: string;
+  /** The root directory of the project */
+  rootDir: string;
+  /** The timestamp for the migration generation */
+  timestamp: Date;
+  /** Function to get the timestamp as a number */
+  getTime(): number;
+}
 
 /**
  * Generates migration files for the given database schemas, including tables, indexes, foreign keys,
@@ -60,22 +75,22 @@ export default async function generateMigrations({
   schemas,
   indexes,
   foreignKeys,
-  outputDir,
+  config,
 }: {
   knex: Knex;
   schemas: readonly string[];
   indexes: TableIndex[];
   foreignKeys: ForeignKey[];
-  outputDir: string;
+  config: MigrationConfig;
 }): Promise<void> {
   // Clean up the migrations directory to ensure a fresh start
   console.log('Cleaning up migrations directory...');
-  fsx.emptydirSync(outputDir);
+  fsx.emptydirSync(config.outDir);
 
   // Generate migrations for database-level objects: functions, composites, domains, and triggers
-  await generateFunctions(knex, schemas, outputDir);
-  await generateComposites(knex, schemas, outputDir);
-  await generateDomains(knex, schemas, outputDir);
+  await generateFunctions(knex, schemas, config);
+  await generateComposites(knex, schemas, config);
+  await generateDomains(knex, schemas, config);
 
   // Process each schema and generate migrations for its tables
   for await (const schemaName of schemas) {
@@ -93,28 +108,24 @@ export default async function generateMigrations({
 
       // Generate the main table structure, indexes, and related constraints
       await generateTableInfo({ tableName, columnsInfo, schemaName, tableForeignKeys }, variables);
-      //generateCreateIndexes(tableIndexes, tableName, schemaName, variables);
-      //generateRemoveIndexes(tableIndexes, variables);
 
       // Create and save the migration file for this table
-      const fileName = createFilename(outputDir, `create_${schemaName}_${tableName}_table`);
+      const fileName = createFilename(config.outDir, `create_${schemaName}_${tableName}_table`, config.getTime());
       console.log('Generated table migration:', fileName);
       createFile(fileName, variables);
     }
   }
 
-  // Pause briefly to ensure all file operations complete
-  await sleep(1000);
-
   // Generate migrations for database views
-  await generateIndexes(indexes, outputDir);
-  await generateViews(knex, schemas, outputDir);
-  await generateTriggers(knex, schemas, outputDir);
+  await generateIndexes(indexes, config);
 
   // Generate a separate migration for all foreign key constraints
   const fkVars = initVariables();
   generateForeignKeys(foreignKeys, fkVars);
-  const fileName = createFilename(outputDir, `create_create-foreign-keys`);
+  const fileName = createFilename(config.outDir, `create_create-foreign-keys`, config.getTime());
   console.log('Generated FK migration:', fileName);
   createFile(fileName, fkVars);
+
+  await generateViews(knex, schemas, config);
+  await generateTriggers(knex, schemas, config);
 }
