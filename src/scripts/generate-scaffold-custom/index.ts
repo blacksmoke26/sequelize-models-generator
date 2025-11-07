@@ -12,8 +12,9 @@
 import 'dotenv/config';
 
 import path from 'node:path';
-import figlet from 'figlet';
 import fsx from 'fs-extra';
+import moment from 'moment';
+import figlet from 'figlet';
 import { pascal } from 'case';
 
 // classes
@@ -39,7 +40,7 @@ import {
   sp,
 } from './utils';
 import { renderOut, writeBaseFiles, writeDiagrams, writeRepoFile, writeServerFile } from './writer';
-import generateMigrations from './migration';
+import generateMigrations, { type MigrationConfig } from './migration';
 import { generateAssociations, generateInitializer } from './associations';
 
 /**
@@ -59,7 +60,7 @@ async function run(): Promise<void> {
   const baseDir = FileHelper.join(ROOT_DIR, `src/${DIR_NAME}`);
   const outputDir = path.normalize(`${baseDir}/models`);
 
-  console.log('Cleaning up target directories...');
+  // Clean directories
   fsx.emptydirSync(ROOT_DIR);
   fsx.emptydirSync(baseDir);
   fsx.emptydirSync(outputDir);
@@ -69,9 +70,19 @@ async function run(): Promise<void> {
   fsx.emptydirSync(FileHelper.join(baseDir, 'repositories'));
   fsx.emptydirSync(FileHelper.join(baseDir, 'migrations'));
   fsx.emptydirSync(FileHelper.join(baseDir, 'seeders'));
-  console.log('Target directories cleaned!');
 
-  console.log('Fetching database information...');
+  const migrationConfig: MigrationConfig = {
+    timestamp: moment().toDate(),
+    getTime(): number {
+      this.timestamp = moment(this.timestamp).add(30, 'seconds').toDate();
+      return +moment(this.timestamp).format('YYYYMMDDHHmmss');
+    },
+    dirname: DIR_NAME,
+    outDir: FileHelper.join(baseDir, 'migrations'),
+    rootDir: ROOT_DIR,
+  };
+
+  // Fetch database schema
   const schemas = await DbUtils.getSchemas(knex);
   const indexes = await DbUtils.getIndexes(knex);
   const relationships = await DbUtils.getRelationships(knex);
@@ -170,7 +181,7 @@ async function run(): Promise<void> {
   console.log('Models Initializer generated:', fileName);
 
   // generate migration files
-  await generateMigrations({ knex, schemas, indexes, foreignKeys, outputDir: FileHelper.join(baseDir, 'migrations') });
+  await generateMigrations({ knex, schemas, indexes, foreignKeys, config: migrationConfig });
 
   // generate ERD diagrams
   await writeDiagrams(path.normalize(`${baseDir}/diagrams`));
