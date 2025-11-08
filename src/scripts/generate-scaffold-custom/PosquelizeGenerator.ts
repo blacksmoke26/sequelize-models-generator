@@ -35,7 +35,7 @@ import {
   ModelTemplateVars,
   sp,
 } from './utils';
-import { generateAssociations, generateInitializer } from './associations';
+import { generateAssociations, generateRelations } from './associations';
 import { renderOut, writeBaseFiles, writeDiagrams, writeRepoFile, writeServerFile } from './writer';
 
 // types
@@ -411,7 +411,7 @@ export default class PosquelizeGenerator {
     });
 
     writeServerFile(FileHelper.dirname(this.getBaseDir()), config.anyModelName, this.getOptions().dirname);
-    generateInitializer(this.dbData.relationships, initTplVars);
+    generateRelations(this.dbData.relationships, initTplVars);
 
     const fileName = FileHelper.join(this.getBaseDir('models'), 'index.ts');
     renderOut('models-initializer', fileName, initTplVars);
