@@ -10,6 +10,9 @@ import fsx from 'fs-extra';
 import DbUtils from '~/classes/DbUtils';
 import TableColumns from '~/classes/TableColumns';
 
+// helpers
+import FileHelper from '~/helpers/FileHelper';
+
 // utils
 import {
   createFile,
@@ -24,12 +27,11 @@ import {
   generateViews,
   initVariables,
 } from './libs/migration.lib';
+import { renderOut } from './writer';
 
 // types
 import type { Knex } from 'knex';
 import type { ForeignKey, TableIndex } from '~/typings/utils';
-import FileHelper from '~/helpers/FileHelper';
-import { renderOut } from '~/scripts/generate-scaffold-custom/writer';
 
 /**
  * Configuration interface for migration generation.

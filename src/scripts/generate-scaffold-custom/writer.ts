@@ -5,11 +5,12 @@
  */
 
 // helpers
+import EnvHelper from '~/helpers/EnvHelper';
 import FileHelper from '~/helpers/FileHelper';
 import NunjucksHelper from '~/helpers/NunjucksHelper';
-import EnvHelper from '~/helpers/EnvHelper';
-import exportDbmlDiagram from '~/scripts/generate-scaffold-custom/dbml';
-import path from 'node:path';
+
+// utils
+import exportDbmlDiagram from './dbml';
 
 /**
  * Renders a Nunjucks template and saves the output to a file.
