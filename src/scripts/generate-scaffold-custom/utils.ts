@@ -185,7 +185,7 @@ export const generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVa
     interfacesVars.text += sp(0, `\nexport %s\n`, columnInfo?.tsInterface.trim());
   }
 
-  vars.typesImport += sp(0, `\nimport type { %s } from '~/%s/typings/models';`, typeName, dirname);
+  vars.typesImport += sp(0, ', %s', typeName);
 };
 
 /**

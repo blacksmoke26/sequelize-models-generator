@@ -168,7 +168,8 @@ async function run(): Promise<void> {
       modTplVars.attributes = modTplVars.attributes.trimEnd();
 
       if (modTplVars.typesImport.trim()) {
-        modTplVars.typesImport = `\n// types` + modTplVars.typesImport + `\n`;
+        modTplVars.typesImport =  sp(0, `import type { %s } from '~/%s/typings/models';\n`, modTplVars.typesImport.replace(/^, /, ''), DIR_NAME);
+        modTplVars.typesImport = `\n// types\n` + modTplVars.typesImport;
       }
 
       // Render and save the model file
