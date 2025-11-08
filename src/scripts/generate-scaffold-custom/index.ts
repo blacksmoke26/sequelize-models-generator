@@ -68,6 +68,7 @@ async function run(): Promise<void> {
   fsx.mkdirSync(outputDir);
   fsx.mkdirSync(FileHelper.join(baseDir, 'base'));
   fsx.mkdirSync(FileHelper.join(baseDir, 'config'));
+  fsx.mkdirSync(FileHelper.join(baseDir, 'typings'));
   fsx.mkdirSync(FileHelper.join(baseDir, 'diagrams'));
   fsx.mkdirSync(FileHelper.join(baseDir, 'repositories'));
   fsx.mkdirSync(FileHelper.join(baseDir, 'migrations'));
@@ -97,6 +98,9 @@ async function run(): Promise<void> {
   writeBaseFiles(baseDir, DIR_NAME);
 
   const initTplVars = getInitializerTemplateVars();
+  const interfacesVar: { text: string } = {
+    text: '',
+  };
 
   // Iterate through all database schemas
   for (const schemaName of schemas) {
@@ -141,7 +145,7 @@ async function run(): Promise<void> {
 
         // Generate various model components
         generateEnums(columnInfo, modTplVars, modelName);
-        generateInterfaces(columnInfo, modTplVars);
+        generateInterfaces(columnInfo, modTplVars, interfacesVar, DIR_NAME);
         generateFields(columnInfo, modTplVars, modelName, {
           targetTable: relation?.target?.table ?? null,
           targetColumn: relation?.target?.column ?? null,
@@ -163,6 +167,10 @@ async function run(): Promise<void> {
       modTplVars.options = modTplVars.options.trimEnd();
       modTplVars.attributes = modTplVars.attributes.trimEnd();
 
+      if (modTplVars.typesImport.trim()) {
+        modTplVars.typesImport = `\n// types` + modTplVars.typesImport + `\n`;
+      }
+
       // Render and save the model file
       const fileName = FileHelper.join(outputDir, `${modelName}.ts`);
       renderOut('model-template', fileName, { ...modTplVars, dirname: DIR_NAME });
@@ -176,6 +184,8 @@ async function run(): Promise<void> {
       writeRepoFile(baseDir, StringHelper.tableToModel(tableName), DIR_NAME);
     }
   }
+
+  renderOut('types/models.d', FileHelper.join(baseDir, 'typings/models.d.ts'), interfacesVar);
 
   writeServerFile(FileHelper.dirname(baseDir), anyModelName, DIR_NAME);
   generateInitializer(relationships, initTplVars);

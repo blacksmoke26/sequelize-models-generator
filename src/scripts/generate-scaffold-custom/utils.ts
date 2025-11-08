@@ -51,6 +51,8 @@ export interface ModelTemplateVars {
   attributes: string;
   /** Generated model options configuration */
   options: string;
+  /** Import statements for typings */
+  typesImport: string;
 }
 
 /**
@@ -94,6 +96,7 @@ export const getModelTemplateVars = (vars: Partial<ModelTemplateVars> = {}): Mod
     associations: '',
     attributes: '',
     options: '',
+    typesImport: '',
     ...vars,
   };
 };
@@ -164,21 +167,23 @@ export const generateFields = (
  * @param columnInfo - Column information including interface definition
  * @param vars - Template variables object to modify
  */
-export const generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVars) => {
+export const generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVars, interfacesVars: { text: string }, dirname: string) => {
   if (!TypeUtils.isJSON(columnInfo.type)) {
     return;
   }
 
   vars.interfaces += sp(0, `\n/** Interface representing the structure of the %s metadata field. */\n`, columnInfo.sequelizeType);
+  const typeName = TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name);
 
   if (!columnInfo?.tsInterface || !columnInfo?.tsInterface?.includes?.('interface')) {
-    vars.interfaces += sp(0, `export interface %s {\n`, TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name));
-    vars.interfaces += sp(2, `[p: string]: unknown;\n`, TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name));
-    vars.interfaces += sp(0, `}\n`, TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name));
+    interfacesVars.text += sp(0, `export interface %s {\n`, typeName);
+    interfacesVars.text += sp(2, `[p: string]: unknown;\n`);
+    interfacesVars.text += sp(0, `}\n`);
     return;
   }
 
-  vars.interfaces += sp(0, `export %s\n`, TypeScriptTypeParser.combineInterfaces(columnInfo?.tsInterface).trim());
+  interfacesVars.text += sp(0, `export %s\n`, columnInfo?.tsInterface.trim());
+  vars.typesImport += sp(0, `\nimport type { %s } from '~/%s/typings/models';`, typeName, dirname);
 };
 
 /**
