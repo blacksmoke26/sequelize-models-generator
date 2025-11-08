@@ -7,7 +7,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import moment from 'moment';
 import merge from 'deepmerge';
 import { rimraf } from 'rimraf';
 import { pascalCase } from 'change-case';
@@ -18,6 +17,7 @@ import StringHelper from '~/helpers/StringHelper';
 
 // classes
 import DbUtils from '~/classes/DbUtils';
+import MigrationGenerator from './MigrationGenerator';
 import TableColumns, { type ColumnInfo } from '~/classes/TableColumns';
 
 // utils
@@ -35,7 +35,6 @@ import {
   ModelTemplateVars,
   sp,
 } from './utils';
-import generateMigrations, { type MigrationConfig } from './migration';
 import { generateAssociations, generateInitializer } from './associations';
 import { renderOut, writeBaseFiles, writeDiagrams, writeRepoFile, writeServerFile } from './writer';
 
@@ -151,25 +150,7 @@ export default class PosquelizeGenerator {
     this.getBaseDir('typings');
     this.getBaseDir('diagrams');
     this.getBaseDir('repositories');
-    this.getBaseDir('migrations');
     this.getBaseDir('seeders');
-  }
-
-  /**
-   * Gets the migration configuration object
-   * @returns The migration configuration
-   */
-  private getMigrationConfig(): MigrationConfig {
-    return {
-      timestamp: moment().toDate(),
-      getTime(): number {
-        this.timestamp = moment(this.timestamp).add(30, 'seconds').toDate();
-        return +moment(this.timestamp).format('YYYYMMDDHHmmss');
-      },
-      dirname: this.getOptions().dirname,
-      outDir: this.getBaseDir('migrations'),
-      rootDir: this.rootDir,
-    };
   }
 
   /**
@@ -220,7 +201,7 @@ export default class PosquelizeGenerator {
   private async generateModels(initTplVars: InitTemplateVars, interfacesVar: { text: string }, config: { anyModelName: string }): Promise<void> {
     const schemas = this.getFilteredSchemas();
 
-    for (const schemaName of schemas) {
+    for await (const schemaName of schemas) {
       const schemaTables = await this.getSchemaTables(schemaName);
 
       for await (const tableName of schemaTables) {
@@ -252,7 +233,7 @@ export default class PosquelizeGenerator {
     schemaName: string,
     initTplVars: InitTemplateVars,
     interfacesVar: { text: string },
-    config: { anyModelName: string }
+    config: { anyModelName: string },
   ): Promise<void> {
     const tableData = this.getTableData(tableName, schemaName);
     const modelName = this.getModelName(tableName);
@@ -323,7 +304,7 @@ export default class PosquelizeGenerator {
     tableData: { relations: Relationship[]; foreignKeys: ForeignKey[] },
     modTplVars: ModelTemplateVars,
     modelName: string,
-    interfacesVar: { text: string }
+    interfacesVar: { text: string },
   ): void {
     for (const columnInfo of columnsInfo) {
       const relation = tableData.relations.find((x) => x.source.column === columnInfo.name) ?? null;
@@ -353,7 +334,7 @@ export default class PosquelizeGenerator {
     modTplVars: ModelTemplateVars,
     schemaName: string,
     tableName: string,
-    timestampInfo: { hasCreatedAt: boolean; hasUpdatedAt: boolean }
+    timestampInfo: { hasCreatedAt: boolean; hasUpdatedAt: boolean },
   ): void {
     generateRelationsImports(tableData.relations, modTplVars);
     generateOptions(modTplVars, { schemaName, tableName, ...timestampInfo });
@@ -423,7 +404,7 @@ export default class PosquelizeGenerator {
       text: '',
     };
 
-    this.generateModels(initTplVars, interfacesVar, config);
+    await this.generateModels(initTplVars, interfacesVar, config);
 
     renderOut('types/models.d', FileHelper.join(this.getBaseDir(), 'typings/models.d.ts'), {
       text: interfacesVar.text.replaceAll(`\n\n\n`, `\n\n`),
@@ -436,14 +417,17 @@ export default class PosquelizeGenerator {
     renderOut('models-initializer', fileName, initTplVars);
     console.log('Models Initializer generated:', fileName);
 
-    // generate migration files
-    await generateMigrations({
-      knex: this.knex,
+    const migGenerator = new MigrationGenerator(this.knex, {
       schemas: this.dbData.schemas,
       indexes: this.dbData.indexes,
       foreignKeys: this.dbData.foreignKeys,
-      config: this.getMigrationConfig(),
+    }, {
+      dirname: this.getOptions().dirname,
+      outDir: this.getBaseDir('migrations'),
+      rootDir: this.rootDir
     });
+
+    await migGenerator.generate();
 
     // generate ERD diagrams
     await writeDiagrams(path.normalize(`${this.getBaseDir()}/diagrams`));
