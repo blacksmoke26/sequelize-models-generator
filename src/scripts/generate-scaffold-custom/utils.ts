@@ -13,7 +13,6 @@ import { ColumnInfo } from '~/classes/TableColumns';
 
 // parsers
 import SequelizeParser from '~/parsers/SequelizeParser';
-import TypeScriptTypeParser from '~/parsers/TypeScriptTypeParser';
 
 // helpers
 import StringHelper from '~/helpers/StringHelper';
