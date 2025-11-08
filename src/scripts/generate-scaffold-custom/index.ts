@@ -50,7 +50,7 @@ import { generateAssociations, generateInitializer } from './associations';
  * models, repositories, and configuration files.
  */
 async function run(): Promise<void> {
-  console.log(await figlet.text('Sequelize Scaffold App', { font: 'Slant' }));
+  console.log(await figlet.text('Posquelize Generator', { font: 'Slant' }));
   // 1️⃣ Configure Knex
   const knex = KnexClient.create();
 
