@@ -20,7 +20,7 @@ import KnexClient from '~/classes/KnexClient';
 import FileHelper from '~/helpers/FileHelper';
 
 // clients
-import PosquelizeGenerator from './client';
+import PosquelizeGenerator from './PosquelizeGenerator';
 
 /**
  * Main function to orchestrate the scaffold generation process.
