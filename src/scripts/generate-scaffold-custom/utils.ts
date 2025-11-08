@@ -166,13 +166,15 @@ export const generateFields = (
  * Generates TypeScript interfaces for complex column types
  * @param columnInfo - Column information including interface definition
  * @param vars - Template variables object to modify
+ * @param interfacesVars - Object containing generated interface text
+ * @param dirname - Directory name for type imports
  */
 export const generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVars, interfacesVars: { text: string }, dirname: string) => {
   if (!TypeUtils.isJSON(columnInfo.type)) {
     return;
   }
 
-  vars.interfaces += sp(0, `\n/** Interface representing the structure of the %s metadata field. */\n`, columnInfo.sequelizeType);
+  vars.interfaces += sp(0, `\n/** Interface representing the structure of the '%s' metadata field. */\n`, columnInfo.name);
   const typeName = TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name);
 
   if (!columnInfo?.tsInterface || !columnInfo?.tsInterface?.includes?.('interface')) {
