@@ -178,13 +178,13 @@ export const generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVa
   const typeName = TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name);
 
   if (!columnInfo?.tsInterface || !columnInfo?.tsInterface?.includes?.('interface')) {
-    interfacesVars.text += sp(0, `export interface %s {\n`, typeName);
+    interfacesVars.text += sp(0, `\nexport interface %s {\n`, typeName);
     interfacesVars.text += sp(2, `[p: string]: unknown;\n`);
     interfacesVars.text += sp(0, `}\n`);
     return;
   }
 
-  interfacesVars.text += sp(0, `export %s\n`, columnInfo?.tsInterface.trim());
+  interfacesVars.text += sp(0, `\nexport %s\n`, columnInfo?.tsInterface.trim());
   vars.typesImport += sp(0, `\nimport type { %s } from '~/%s/typings/models';`, typeName, dirname);
 };
 

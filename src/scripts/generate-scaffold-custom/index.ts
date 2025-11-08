@@ -185,7 +185,9 @@ async function run(): Promise<void> {
     }
   }
 
-  renderOut('types/models.d', FileHelper.join(baseDir, 'typings/models.d.ts'), interfacesVar);
+  renderOut('types/models.d', FileHelper.join(baseDir, 'typings/models.d.ts'), {
+    text: interfacesVar.text.replaceAll(`\n\n\n`, `\n\n`),
+  });
 
   writeServerFile(FileHelper.dirname(baseDir), anyModelName, DIR_NAME);
   generateInitializer(relationships, initTplVars);
