@@ -18,7 +18,7 @@ import StringHelper from '~/helpers/StringHelper';
 
 // classes
 import DbUtils from '~/classes/DbUtils';
-import TableColumns from '~/classes/TableColumns';
+import TableColumns, { type ColumnInfo } from '~/classes/TableColumns';
 
 // utils
 import {
@@ -32,9 +32,10 @@ import {
   getInitializerTemplateVars,
   getModelTemplateVars,
   InitTemplateVars,
+  ModelTemplateVars,
   sp,
 } from './utils';
-import generateMigrations, { MigrationConfig } from './migration';
+import generateMigrations, { type MigrationConfig } from './migration';
 import { generateAssociations, generateInitializer } from './associations';
 import { renderOut, writeBaseFiles, writeDiagrams, writeRepoFile, writeServerFile } from './writer';
 
@@ -217,92 +218,184 @@ export default class PosquelizeGenerator {
    * @param config Configuration object to track the first generated model name
    */
   private async generateModels(initTplVars: InitTemplateVars, interfacesVar: { text: string }, config: { anyModelName: string }): Promise<void> {
-    const schemas = this.dbData.schemas.filter((x) => {
-      return !this.getOptions().schemas.length ? true : this.getOptions().schemas.includes(x);
-    });
+    const schemas = this.getFilteredSchemas();
 
-    // Iterate through all database schemas
     for (const schemaName of schemas) {
-      // Get all tables for the current schema
       const schemaTables = await this.getSchemaTables(schemaName);
 
-      // Process each table asynchronously
       for await (const tableName of schemaTables) {
-        // Filter relationships for the current table
-        const tableRelations = this.dbData.relationships.filter((x) => x.source.table === tableName) ?? [];
-
-        // Convert table name to PascalCase model name
-        const modelName = this.getModelName(tableName);
-        // Filter indexes for the current table
-        const tableIndexes = this.dbData.indexes.filter((x) => x.table === tableName && x.schema === schemaName);
-        // Filter foreign keys for the current table
-        const tableForeignKeys = this.dbData.foreignKeys.filter((x) => x.tableName === tableName && x.schema === schemaName);
-
-        // Add model imports to the initializer template variables
-        initTplVars.importClasses += sp(0, `import %s from './%s';\n`, modelName, modelName);
-        initTplVars.importTypes += sp(0, `export * from './%s';\n`, modelName);
-        initTplVars.exportClasses += sp(2, `%s,\n`, modelName);
-
-        // Get model template variables
-        const modTplVars = getModelTemplateVars({
-          schemaName,
-          modelName,
-          tableName,
-        });
-
-        // Get column information for the table
-        const columnsInfo = await TableColumns.list(this.knex, tableName, schemaName);
-
-        // Check if table has timestamp columns
-        const hasCreatedAt: boolean = columnsInfo.findIndex((x) => /^created(_a|A)t$/.test(x.name)) !== -1;
-        const hasUpdatedAt: boolean = columnsInfo.findIndex((x) => /^updated(_a|A)t$/.test(x.name)) !== -1;
-
-        // Process each column
-        for (const columnInfo of columnsInfo) {
-          // Find relation for the current column
-          const relation = tableRelations.find((x) => x.source.column === columnInfo.name) ?? null;
-
-          // Generate various model components
-          generateEnums(columnInfo, modTplVars, modelName);
-          generateInterfaces(columnInfo, modTplVars, interfacesVar, this.getOptions().dirname);
-          generateFields(columnInfo, modTplVars, modelName, {
-            targetTable: relation?.target?.table ?? null,
-            targetColumn: relation?.target?.column ?? null,
-            isFK: relation !== null,
-          });
-
-          generateAttributes({ columnInfo, modTplVars, tableForeignKeys });
-        }
-
-        // Generate additional model components
-        generateRelationsImports(tableRelations, modTplVars);
-        generateOptions(modTplVars, { schemaName, tableName, hasCreatedAt, hasUpdatedAt });
-        generateIndexes(tableIndexes, modTplVars);
-        generateAssociations(tableRelations, modTplVars, tableName);
-
-        // Clean up template variables
-        modTplVars.modelsImport = modTplVars.modelsImport.trimEnd();
-        modTplVars.fields = modTplVars.fields.trimEnd();
-        modTplVars.options = modTplVars.options.trimEnd();
-        modTplVars.attributes = modTplVars.attributes.trimEnd();
-
-        if (modTplVars.typesImport.trim()) {
-          modTplVars.typesImport = sp(0, `import type { %s } from '~/%s/typings/models';\n`, modTplVars.typesImport.replace(/^, /, ''), this.getOptions().dirname);
-          modTplVars.typesImport = `\n// types\n` + modTplVars.typesImport;
-        }
-
-        // Render and save the model file
-        const fileName = FileHelper.join(this.getBaseDir('models'), `${modelName}.ts`);
-        renderOut('model-template', fileName, { ...modTplVars, dirname: this.getOptions().dirname });
-        console.log('Model generated:', fileName);
-
-        if (!config.anyModelName) {
-          config.anyModelName = modelName;
-        }
-
-        // Generate repository file for the model
-        writeRepoFile(this.getBaseDir(), StringHelper.tableToModel(tableName), this.getOptions().dirname);
+        await this.processTable(tableName, schemaName, initTplVars, interfacesVar, config);
       }
+    }
+  }
+
+  /**
+   * Filters schemas based on the generator options
+   * @returns Array of filtered schema names
+   */
+  private getFilteredSchemas(): string[] {
+    return this.dbData.schemas.filter((x) => {
+      return !this.getOptions().schemas.length ? true : this.getOptions().schemas.includes(x);
+    });
+  }
+
+  /**
+   * Processes a single table to generate its model and related files
+   * @param tableName The name of the table to process
+   * @param schemaName The schema name containing the table
+   * @param initTplVars Template variables for the initializer file
+   * @param interfacesVar Object to accumulate interface definitions
+   * @param config Configuration object to track the first generated model name
+   */
+  private async processTable(
+    tableName: string,
+    schemaName: string,
+    initTplVars: InitTemplateVars,
+    interfacesVar: { text: string },
+    config: { anyModelName: string }
+  ): Promise<void> {
+    const tableData = this.getTableData(tableName, schemaName);
+    const modelName = this.getModelName(tableName);
+
+    this.updateInitializerVars(modelName, initTplVars);
+    const modTplVars = getModelTemplateVars({ schemaName, modelName, tableName });
+
+    const columnsInfo = await TableColumns.list(this.knex, tableName, schemaName);
+    const timestampInfo = this.getTimestampInfo(columnsInfo);
+
+    this.processColumns(columnsInfo, tableData, modTplVars, modelName, interfacesVar);
+    this.generateModelComponents(tableData, modTplVars, schemaName, tableName, timestampInfo);
+
+    this.finalizeTemplateVars(modTplVars);
+    this.writeModelFile(modelName, modTplVars);
+    this.updateConfig(config, modelName);
+
+    writeRepoFile(this.getBaseDir(), StringHelper.tableToModel(tableName), this.getOptions().dirname);
+  }
+
+  /**
+   * Retrieves table-specific data including relations, indexes, and foreign keys
+   * @param tableName The name of the table
+   * @param schemaName The schema name containing the table
+   * @returns Object containing table data
+   */
+  private getTableData(tableName: string, schemaName: string) {
+    return {
+      relations: this.dbData.relationships.filter((x) => x.source.table === tableName) ?? [],
+      indexes: this.dbData.indexes.filter((x) => x.table === tableName && x.schema === schemaName),
+      foreignKeys: this.dbData.foreignKeys.filter((x) => x.tableName === tableName && x.schema === schemaName),
+    };
+  }
+
+  /**
+   * Updates the initializer template variables with model information
+   * @param modelName The name of the model
+   * @param initTplVars The initializer template variables to update
+   */
+  private updateInitializerVars(modelName: string, initTplVars: InitTemplateVars): void {
+    initTplVars.importClasses += sp(0, `import %s from './%s';\n`, modelName, modelName);
+    initTplVars.importTypes += sp(0, `export * from './%s';\n`, modelName);
+    initTplVars.exportClasses += sp(2, `%s,\n`, modelName);
+  }
+
+  /**
+   * Determines if the table has timestamp columns
+   * @param columnsInfo Array of column information
+   * @returns Object indicating presence of created_at and updated_at columns
+   */
+  private getTimestampInfo(columnsInfo: ColumnInfo[]) {
+    return {
+      hasCreatedAt: columnsInfo.findIndex((x) => /^created(_a|A)t$/.test(x.name)) !== -1,
+      hasUpdatedAt: columnsInfo.findIndex((x) => /^updated(_a|A)t$/.test(x.name)) !== -1,
+    };
+  }
+
+  /**
+   * Processes all columns in a table to generate fields, interfaces, and attributes
+   * @param columnsInfo Array of column information
+   * @param tableData Table-specific data including relations and foreign keys
+   * @param modTplVars Model template variables
+   * @param modelName The name of the model
+   * @param interfacesVar Object to accumulate interface definitions
+   */
+  private processColumns(
+    columnsInfo: ColumnInfo[],
+    tableData: { relations: Relationship[]; foreignKeys: ForeignKey[] },
+    modTplVars: ModelTemplateVars,
+    modelName: string,
+    interfacesVar: { text: string }
+  ): void {
+    for (const columnInfo of columnsInfo) {
+      const relation = tableData.relations.find((x) => x.source.column === columnInfo.name) ?? null;
+
+      generateEnums(columnInfo, modTplVars, modelName);
+      generateInterfaces(columnInfo, modTplVars, interfacesVar, this.getOptions().dirname);
+      generateFields(columnInfo, modTplVars, modelName, {
+        targetTable: relation?.target?.table ?? null,
+        targetColumn: relation?.target?.column ?? null,
+        isFK: relation !== null,
+      });
+
+      generateAttributes({ columnInfo, modTplVars, tableForeignKeys: tableData.foreignKeys });
+    }
+  }
+
+  /**
+   * Generates all model components including relations, options, indexes, and associations
+   * @param tableData Table-specific data including relations and indexes
+   * @param modTplVars Model template variables
+   * @param schemaName The schema name
+   * @param tableName The table name
+   * @param timestampInfo Timestamp column information
+   */
+  private generateModelComponents(
+    tableData: { relations: Relationship[]; indexes: TableIndex[] },
+    modTplVars: ModelTemplateVars,
+    schemaName: string,
+    tableName: string,
+    timestampInfo: { hasCreatedAt: boolean; hasUpdatedAt: boolean }
+  ): void {
+    generateRelationsImports(tableData.relations, modTplVars);
+    generateOptions(modTplVars, { schemaName, tableName, ...timestampInfo });
+    generateIndexes(tableData.indexes, modTplVars);
+    generateAssociations(tableData.relations, modTplVars, tableName);
+  }
+
+  /**
+   * Finalizes template variables by trimming whitespace and adding type imports if needed
+   * @param modTplVars Model template variables to finalize
+   */
+  private finalizeTemplateVars(modTplVars: ModelTemplateVars): void {
+    modTplVars.modelsImport = modTplVars.modelsImport.trimEnd();
+    modTplVars.fields = modTplVars.fields.trimEnd();
+    modTplVars.options = modTplVars.options.trimEnd();
+    modTplVars.attributes = modTplVars.attributes.trimEnd();
+
+    if (modTplVars.typesImport.trim()) {
+      modTplVars.typesImport = sp(0, `import type { %s } from '~/%s/typings/models';\n`, modTplVars.typesImport.replace(/^, /, ''), this.getOptions().dirname);
+      modTplVars.typesImport = `\n// types\n` + modTplVars.typesImport;
+    }
+  }
+
+  /**
+   * Writes the model file to disk
+   * @param modelName The name of the model
+   * @param modTplVars Model template variables
+   */
+  private writeModelFile(modelName: string, modTplVars: ModelTemplateVars): void {
+    const fileName = FileHelper.join(this.getBaseDir('models'), `${modelName}.ts`);
+    renderOut('model-template', fileName, { ...modTplVars, dirname: this.getOptions().dirname });
+    console.log('Model generated:', fileName);
+  }
+
+  /**
+   * Updates the configuration with the first model name if not already set
+   * @param config Configuration object
+   * @param modelName The name of the model
+   */
+  private updateConfig(config: { anyModelName: string }, modelName: string): void {
+    if (!config.anyModelName) {
+      config.anyModelName = modelName;
     }
   }
 
