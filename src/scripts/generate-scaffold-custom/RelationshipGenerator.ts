@@ -12,12 +12,12 @@ import { camelCase, pascalCase } from 'change-case';
 import StringHelper from '~/helpers/StringHelper';
 
 // utils
-import { sp } from './utils';
+import { sp } from './ModelGenerator';
 import { RelationshipType } from '~/classes/DbUtils';
 
 // types
 import type { Relationship } from '~/typings/utils';
-import type { InitTemplateVars, ModelTemplateVars } from './utils';
+import type { InitTemplateVars, ModelTemplateVars } from './ModelGenerator';
 
 /**
  * Abstract class for generating relationship aliases and mixins

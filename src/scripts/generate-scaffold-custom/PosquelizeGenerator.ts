@@ -23,20 +23,7 @@ import RelationshipGenerator from './RelationshipGenerator';
 import TableColumns, { type ColumnInfo } from '~/classes/TableColumns';
 
 // utils
-import {
-  generateAttributes,
-  generateEnums,
-  generateFields,
-  generateIndexes,
-  generateInterfaces,
-  generateOptions,
-  generateRelationsImports,
-  getInitializerTemplateVars,
-  getModelTemplateVars,
-  InitTemplateVars,
-  ModelTemplateVars,
-  sp,
-} from './utils';
+import ModelGenerator, { InitTemplateVars, ModelTemplateVars, sp } from './ModelGenerator';
 
 // types
 import type { Knex } from 'knex';
@@ -239,7 +226,7 @@ export default class PosquelizeGenerator {
     const modelName = this.getModelName(tableName);
 
     this.updateInitializerVars(modelName, initTplVars);
-    const modTplVars = getModelTemplateVars({ schemaName, modelName, tableName });
+    const modTplVars = ModelGenerator.getModelTemplateVars({ schemaName, modelName, tableName });
 
     const columnsInfo = await TableColumns.list(this.knex, tableName, schemaName);
     const timestampInfo = this.getTimestampInfo(columnsInfo);
@@ -309,15 +296,15 @@ export default class PosquelizeGenerator {
     for (const columnInfo of columnsInfo) {
       const relation = tableData.relations.find((x) => x.source.column === columnInfo.name) ?? null;
 
-      generateEnums(columnInfo, modTplVars, modelName);
-      generateInterfaces(columnInfo, modTplVars, interfacesVar, this.getOptions().dirname);
-      generateFields(columnInfo, modTplVars, modelName, {
+      ModelGenerator.generateEnums(columnInfo, modTplVars, modelName);
+      ModelGenerator.generateInterfaces(columnInfo, modTplVars, interfacesVar, this.getOptions().dirname);
+      ModelGenerator.generateFields(columnInfo, modTplVars, modelName, {
         targetTable: relation?.target?.table ?? null,
         targetColumn: relation?.target?.column ?? null,
         isFK: relation !== null,
       });
 
-      generateAttributes({ columnInfo, modTplVars, tableForeignKeys: tableData.foreignKeys });
+      ModelGenerator.generateAttributes({ columnInfo, modTplVars, tableForeignKeys: tableData.foreignKeys });
     }
   }
 
@@ -336,9 +323,9 @@ export default class PosquelizeGenerator {
     tableName: string,
     timestampInfo: { hasCreatedAt: boolean; hasUpdatedAt: boolean },
   ): void {
-    generateRelationsImports(tableData.relations, modTplVars);
-    generateOptions(modTplVars, { schemaName, tableName, ...timestampInfo });
-    generateIndexes(tableData.indexes, modTplVars);
+    ModelGenerator.generateRelationsImports(tableData.relations, modTplVars);
+    ModelGenerator.generateOptions(modTplVars, { schemaName, tableName, ...timestampInfo });
+    ModelGenerator.generateIndexes(tableData.indexes, modTplVars);
     RelationshipGenerator.generateAssociations(tableData.relations, modTplVars, tableName);
   }
 
@@ -399,7 +386,7 @@ export default class PosquelizeGenerator {
 
     TemplateWriter.writeBaseFiles(this.getBaseDir(), this.getOptions().dirname);
 
-    const initTplVars = getInitializerTemplateVars();
+    const initTplVars = ModelGenerator.getInitializerTemplateVars();
     const interfacesVar: { text: string } = {
       text: '',
     };
@@ -417,15 +404,19 @@ export default class PosquelizeGenerator {
     TemplateWriter.renderOut('models-initializer', fileName, initTplVars);
     console.log('Models Initializer generated:', fileName);
 
-    const migGenerator = new MigrationGenerator(this.knex, {
-      schemas: this.dbData.schemas,
-      indexes: this.dbData.indexes,
-      foreignKeys: this.dbData.foreignKeys,
-    }, {
-      dirname: this.getOptions().dirname,
-      outDir: this.getBaseDir('migrations'),
-      rootDir: this.rootDir
-    });
+    const migGenerator = new MigrationGenerator(
+      this.knex,
+      {
+        schemas: this.dbData.schemas,
+        indexes: this.dbData.indexes,
+        foreignKeys: this.dbData.foreignKeys,
+      },
+      {
+        dirname: this.getOptions().dirname,
+        outDir: this.getBaseDir('migrations'),
+        rootDir: this.rootDir,
+      },
+    );
 
     await migGenerator.generate();
 

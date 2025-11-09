@@ -15,7 +15,7 @@ import DbMigrator from '~/classes/DbMigrator';
 import TypeUtils from '~/classes/TypeUtils';
 
 // utils
-import { sp } from './utils';
+import { sp } from './ModelGenerator';
 import TemplateWriter from './TemplateWriter';
 
 // types
