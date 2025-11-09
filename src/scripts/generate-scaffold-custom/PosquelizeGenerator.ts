@@ -17,7 +17,9 @@ import StringHelper from '~/helpers/StringHelper';
 
 // classes
 import DbUtils from '~/classes/DbUtils';
+import TemplateWriter from './TemplateWriter';
 import MigrationGenerator from './MigrationGenerator';
+import RelationshipGenerator from './RelationshipGenerator';
 import TableColumns, { type ColumnInfo } from '~/classes/TableColumns';
 
 // utils
@@ -35,8 +37,6 @@ import {
   ModelTemplateVars,
   sp,
 } from './utils';
-import { generateAssociations, generateRelations } from './associations';
-import { renderOut, writeBaseFiles, writeDiagrams, writeRepoFile, writeServerFile } from './writer';
 
 // types
 import type { Knex } from 'knex';
@@ -251,7 +251,7 @@ export default class PosquelizeGenerator {
     this.writeModelFile(modelName, modTplVars);
     this.updateConfig(config, modelName);
 
-    writeRepoFile(this.getBaseDir(), StringHelper.tableToModel(tableName), this.getOptions().dirname);
+    TemplateWriter.writeRepoFile(this.getBaseDir(), StringHelper.tableToModel(tableName), this.getOptions().dirname);
   }
 
   /**
@@ -339,7 +339,7 @@ export default class PosquelizeGenerator {
     generateRelationsImports(tableData.relations, modTplVars);
     generateOptions(modTplVars, { schemaName, tableName, ...timestampInfo });
     generateIndexes(tableData.indexes, modTplVars);
-    generateAssociations(tableData.relations, modTplVars, tableName);
+    RelationshipGenerator.generateAssociations(tableData.relations, modTplVars, tableName);
   }
 
   /**
@@ -365,7 +365,7 @@ export default class PosquelizeGenerator {
    */
   private writeModelFile(modelName: string, modTplVars: ModelTemplateVars): void {
     const fileName = FileHelper.join(this.getBaseDir('models'), `${modelName}.ts`);
-    renderOut('model-template', fileName, { ...modTplVars, dirname: this.getOptions().dirname });
+    TemplateWriter.renderOut('model-template', fileName, { ...modTplVars, dirname: this.getOptions().dirname });
     console.log('Model generated:', fileName);
   }
 
@@ -397,7 +397,7 @@ export default class PosquelizeGenerator {
       anyModelName: string;
     } = { anyModelName: undefined };
 
-    writeBaseFiles(this.getBaseDir(), this.getOptions().dirname);
+    TemplateWriter.writeBaseFiles(this.getBaseDir(), this.getOptions().dirname);
 
     const initTplVars = getInitializerTemplateVars();
     const interfacesVar: { text: string } = {
@@ -406,15 +406,15 @@ export default class PosquelizeGenerator {
 
     await this.generateModels(initTplVars, interfacesVar, config);
 
-    renderOut('types/models.d', FileHelper.join(this.getBaseDir(), 'typings/models.d.ts'), {
+    TemplateWriter.renderOut('types/models.d', FileHelper.join(this.getBaseDir(), 'typings/models.d.ts'), {
       text: interfacesVar.text.replaceAll(`\n\n\n`, `\n\n`),
     });
 
-    writeServerFile(FileHelper.dirname(this.getBaseDir()), config.anyModelName, this.getOptions().dirname);
-    generateRelations(this.dbData.relationships, initTplVars);
+    TemplateWriter.writeServerFile(FileHelper.dirname(this.getBaseDir()), config.anyModelName, this.getOptions().dirname);
+    RelationshipGenerator.generateRelations(this.dbData.relationships, initTplVars);
 
     const fileName = FileHelper.join(this.getBaseDir('models'), 'index.ts');
-    renderOut('models-initializer', fileName, initTplVars);
+    TemplateWriter.renderOut('models-initializer', fileName, initTplVars);
     console.log('Models Initializer generated:', fileName);
 
     const migGenerator = new MigrationGenerator(this.knex, {
@@ -430,6 +430,6 @@ export default class PosquelizeGenerator {
     await migGenerator.generate();
 
     // generate ERD diagrams
-    await writeDiagrams(path.normalize(`${this.getBaseDir()}/diagrams`));
+    await TemplateWriter.writeDiagrams(path.normalize(`${this.getBaseDir()}/diagrams`));
   }
 }
