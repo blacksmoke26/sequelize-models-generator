@@ -38,11 +38,10 @@ export default abstract class TemplateWriter {
    * exports the schema as a DBML file, and creates a README with documentation.
    *
    * @param {string} outputDir - The directory path where the diagram files will be written.
+   * @param {string} connectionString - Database connection string
    * @returns {Promise<void>}
    */
-  public static async writeDiagrams(outputDir: string): Promise<void> {
-    // Get database connection string from environment
-    const connectionString: string = EnvHelper.getConnectionString();
+  public static async writeDiagrams(outputDir: string, connectionString: string): Promise<void> {
     // Export database schema to DBML format
     await DbmlDiagramExporter.export(connectionString, FileHelper.join(outputDir, 'database.dbml'));
   }
