@@ -8,27 +8,13 @@ import moment from 'moment';
 import merge from 'deepmerge';
 
 // classes
-import TableColumns from '~/classes/TableColumns';
 import DbUtils from '~/classes/DbUtils';
+import MigrationUtils from './MigrationUtils';
+import TemplateWriter from './TemplateWriter';
+import TableColumns from '~/classes/TableColumns';
 
 // helpers
 import FileHelper from '~/helpers/FileHelper';
-
-// utils
-import {
-  createFile,
-  createFilename,
-  generateComposites,
-  generateDomains,
-  generateForeignKeys,
-  generateFunctions,
-  generateIndexes,
-  generateTableInfo,
-  generateTriggers,
-  generateViews,
-  initVariables,
-} from './libs/migration.lib';
-import { renderOut } from './writer';
 
 // types
 import type { Knex } from 'knex';
@@ -123,9 +109,9 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateDatabaseObjects(config: MigrationConfig): Promise<void> {
-    await generateFunctions(this.knex, this.data.schemas, config);
-    await generateComposites(this.knex, this.data.schemas, config);
-    await generateDomains(this.knex, this.data.schemas, config);
+    await MigrationUtils.generateFunctions(this.knex, this.data.schemas, config);
+    await MigrationUtils.generateComposites(this.knex, this.data.schemas, config);
+    await MigrationUtils.generateDomains(this.knex, this.data.schemas, config);
   }
 
   /**
@@ -162,13 +148,13 @@ export default class MigrationGenerator {
       (x) => x.tableName === tableName && x.schema === schemaName
     );
     const columnsInfo = await TableColumns.list(this.knex, tableName, schemaName);
-    const variables = initVariables();
+    const variables = MigrationUtils.initVariables();
 
-    await generateTableInfo({ tableName, columnsInfo, schemaName, tableForeignKeys }, variables);
+    await MigrationUtils.generateTableInfo({ tableName, columnsInfo, schemaName, tableForeignKeys }, variables);
 
-    const fileName = createFilename(config.outDir, `create_${schemaName}_${tableName}_table`, config.getTime());
+    const fileName = MigrationUtils.createFilename(config.outDir, `create_${schemaName}_${tableName}_table`, config.getTime());
     console.log('Generated table migration:', fileName);
-    createFile(fileName, variables);
+    MigrationUtils.createFile(fileName, variables);
   }
 
   /**
@@ -176,10 +162,10 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateRemainingMigrations(config: MigrationConfig): Promise<void> {
-    await generateIndexes(this.data.indexes, config);
+    await MigrationUtils.generateIndexes(this.data.indexes, config);
     await this.generateForeignKeysMigration(config);
-    await generateViews(this.knex, this.data.schemas, config);
-    await generateTriggers(this.knex, this.data.schemas, config);
+    await MigrationUtils.generateViews(this.knex, this.data.schemas, config);
+    await MigrationUtils.generateTriggers(this.knex, this.data.schemas, config);
   }
 
   /**
@@ -187,11 +173,11 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateForeignKeysMigration(config: MigrationConfig): Promise<void> {
-    const fkVars = initVariables();
-    generateForeignKeys(this.data.foreignKeys, fkVars);
-    const fileName = createFilename(config.outDir, `create_create-foreign-keys`, config.getTime());
+    const fkVars = MigrationUtils.initVariables();
+    MigrationUtils.generateForeignKeys(this.data.foreignKeys, fkVars);
+    const fileName = MigrationUtils.createFilename(config.outDir, `create_create-foreign-keys`, config.getTime());
     console.log('Generated FK migration:', fileName);
-    createFile(fileName, fkVars);
+    MigrationUtils.createFile(fileName, fkVars);
   }
 
   /**
@@ -199,11 +185,11 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateInitialSeeders(config: MigrationConfig): Promise<void> {
-    const seedFile = createFilename(
+    const seedFile = MigrationUtils.createFilename(
       FileHelper.join(config.outDir, '../seeders'),
       'add_init_records',
       config.getTime()
     );
-    renderOut('seeder-init', seedFile);
+    TemplateWriter.renderOut('seeder-init', seedFile);
   }
 }
