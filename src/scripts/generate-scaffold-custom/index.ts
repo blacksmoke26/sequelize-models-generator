@@ -21,6 +21,7 @@ import FileHelper from '~/helpers/FileHelper';
 
 // clients
 import PosquelizeGenerator from './PosquelizeGenerator';
+import EnvHelper from '~/helpers/EnvHelper';
 
 /**
  * Main function to orchestrate the scaffold generation process.
@@ -33,7 +34,7 @@ async function run(): Promise<void> {
 
   console.log(await figlet.text('Posquelize Generator', { font: 'Slant' }));
 
-  const generator = new PosquelizeGenerator(knex, FileHelper.rootPath(`dist/custom-scaffold`), {
+  const generator = new PosquelizeGenerator(EnvHelper.getConnectionString(), FileHelper.rootPath(`dist/custom-scaffold`), {
     cleanRootDir: true,
   });
   await generator.generate();
