@@ -250,9 +250,8 @@ export default abstract class ModelGenerator {
    * @param columnInfo - Column information including type and interface definition
    * @param vars - Template variables object to modify with type imports
    * @param interfacesVars - Object containing the generated interface text
-   * @param dirname - Directory name for type imports (currently unused)
    */
-  public static generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVars, interfacesVars: { text: string }, dirname: string) => {
+  public static generateInterfaces = (columnInfo: ColumnInfo, vars: ModelTemplateVars, interfacesVars: { text: string }) => {
     if (!TypeUtils.isJSON(columnInfo.type)) {
       return;
     }

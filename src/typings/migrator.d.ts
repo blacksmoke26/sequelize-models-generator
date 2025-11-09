@@ -5,7 +5,6 @@
  */
 
 import { TriggerEvent, TriggerTiming, ViewType } from '~/classes/DbMigrator';
-import { generateComposites } from '~/scripts/generate-scaffold-custom/libs/migration.lib';
 
 /**
  * Interface representing a database view.

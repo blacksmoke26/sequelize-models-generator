@@ -95,7 +95,7 @@ export function parsePostgreSQLValue(value: any, type: string): any {
       if (typeof value === 'string') {
         try {
           return JSON.parse(value);
-        } catch (e) {
+        } catch {
           return value;
         }
       }
@@ -126,7 +126,7 @@ export function parsePostgreSQLValue(value: any, type: string): any {
       if (typeof value === 'string') {
         try {
           return JSON.parse(value);
-        } catch (e) {
+        } catch {
           return value;
         }
       }

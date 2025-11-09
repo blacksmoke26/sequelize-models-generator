@@ -115,7 +115,7 @@ export class PostgresValueParser {
     if (typeof value === 'string') {
       try {
         return JSON.parse(value);
-      } catch (error) {
+      } catch {
         // If parsing fails, return the original string
         return value;
       }
@@ -168,7 +168,7 @@ export class PostgresValueParser {
 
       // Handle array parsing (simplified version)
       return this.parseArrayElements(arrayStr);
-    } catch (error) {
+    } catch {
       // If parsing fails, return the original string
       return value;
     }
@@ -266,7 +266,7 @@ export class PostgresValueParser {
     if (typeof value === 'string' && value.startsWith('\\x')) {
       try {
         return Buffer.from(value.substring(2), 'hex');
-      } catch (error) {
+      } catch {
         return value;
       }
     }

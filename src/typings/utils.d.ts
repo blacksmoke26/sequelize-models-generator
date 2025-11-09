@@ -4,7 +4,7 @@
  * @see https://github.com/blacksmoke26
  */
 
-import { ConstraintType, RelationshipType } from '~/classes/DbUtils';
+import { RelationshipType } from '~/classes/DbUtils';
 
 // types
 import type { TableColumnInfo } from '~/typings/knex';

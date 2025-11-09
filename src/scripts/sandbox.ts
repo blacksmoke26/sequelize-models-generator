@@ -11,7 +11,6 @@ import figlet from 'figlet';
 // classes
 import KnexClient from '../classes/KnexClient';
 import TableColumns from '~/classes/TableColumns';
-import DbUtils from '~/classes/DbUtils';
 
 async function run() {
   console.log(await figlet.text('Sandbox', { font: 'Slant' }));
