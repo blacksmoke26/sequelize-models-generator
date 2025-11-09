@@ -18,6 +18,7 @@ import StringHelper from '~/helpers/StringHelper';
 // classes
 import DbUtils from '~/classes/DbUtils';
 import TemplateWriter from './TemplateWriter';
+import KnexClient from '~/classes/KnexClient';
 import MigrationGenerator from './MigrationGenerator';
 import RelationshipGenerator from './RelationshipGenerator';
 import TableColumns, { type ColumnInfo } from '~/classes/TableColumns';
@@ -68,6 +69,8 @@ export interface GeneratorOptions {
  * Generates Sequelize models, migrations, and related files from a database schema
  */
 export default class PosquelizeGenerator {
+  public knex: Knex;
+
   /**
    * Database metadata including schemas, indexes, relationships, and foreign keys
    */
@@ -85,15 +88,17 @@ export default class PosquelizeGenerator {
 
   /**
    * Creates a new instance of PosquelizeGenerator
-   * @param knex The Knex instance for database operations
+   * @param connectionString The database connection string
    * @param rootDir The root directory where files will be generated
    * @param options Optional configuration for the generator
    */
   constructor(
-    public readonly knex: Knex,
+    public readonly connectionString: string,
     public readonly rootDir: string,
     public readonly options: GeneratorOptions = {},
-  ) {}
+  ) {
+    this.knex = KnexClient.create(connectionString);
+  }
 
   /**
    * Gets the merged generator options with defaults
@@ -421,6 +426,6 @@ export default class PosquelizeGenerator {
     await migGenerator.generate();
 
     // generate ERD diagrams
-    await TemplateWriter.writeDiagrams(path.normalize(`${this.getBaseDir()}/diagrams`));
+    await TemplateWriter.writeDiagrams(path.normalize(`${this.getBaseDir()}/diagrams`), this.connectionString);
   }
 }
