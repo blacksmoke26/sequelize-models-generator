@@ -6,9 +6,10 @@
 
 // utils
 import TypeUtils from '~/classes/TypeUtils';
+import { ConstraintType } from '~/classes/DbUtils';
 
 // types
-import { ConstraintType, type ExclusiveColumnInfo } from '~/classes/DbUtils';
+import type { ExclusiveColumnInfo } from '~/typings/utils';
 
 /**
  * Utility class for handling exclusive table info.
