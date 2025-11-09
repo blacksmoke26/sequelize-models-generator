@@ -13,9 +13,6 @@ import 'dotenv/config';
 
 import figlet from 'figlet';
 
-// classes
-import KnexClient from '~/classes/KnexClient';
-
 // helpers
 import FileHelper from '~/helpers/FileHelper';
 
@@ -29,9 +26,6 @@ import EnvHelper from '~/helpers/EnvHelper';
  * models, repositories, and configuration files.
  */
 async function run(): Promise<void> {
-  // 1️⃣ Configure Knex
-  const knex = KnexClient.create();
-
   console.log(await figlet.text('Posquelize Generator', { font: 'Slant' }));
 
   const generator = new PosquelizeGenerator(EnvHelper.getConnectionString(), FileHelper.rootPath(`dist/custom-scaffold`), {
