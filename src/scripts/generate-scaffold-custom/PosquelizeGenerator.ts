@@ -302,7 +302,7 @@ export default class PosquelizeGenerator {
       const relation = tableData.relations.find((x) => x.source.column === columnInfo.name) ?? null;
 
       ModelGenerator.generateEnums(columnInfo, modTplVars, modelName);
-      ModelGenerator.generateInterfaces(columnInfo, modTplVars, interfacesVar, this.getOptions().dirname);
+      ModelGenerator.generateInterfaces(columnInfo, modTplVars, interfacesVar);
       ModelGenerator.generateFields(columnInfo, modTplVars, modelName, {
         targetTable: relation?.target?.table ?? null,
         targetColumn: relation?.target?.column ?? null,
