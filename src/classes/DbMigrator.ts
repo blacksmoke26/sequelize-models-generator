@@ -11,8 +11,7 @@ import FileHelper from '~/helpers/FileHelper';
 
 // types
 import type { Knex } from 'knex';
-import { DbComposite, DbDomain, DbFunction, DbTrigger, DbView } from '~/typings/migrator';
-import { generateComposites } from '~/scripts/generate-scaffold-custom/libs/migration.lib';
+import type { DbComposite, DbDomain, DbFunction, DbTrigger, DbView } from '~/typings/migrator';
 
 /**
  * Enum representing the types of database views.
